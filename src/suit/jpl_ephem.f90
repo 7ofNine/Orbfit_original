@@ -238,7 +238,7 @@
 !     check for librations                                              
 !                                                                       
       if(ntarg.eq.15)then 
-        if(lpt(2).gt.0) then 
+        if(ipt(2,13).gt.0) then
           list(12)=2 
           call state(et2,list,pv,rrd,istate) 
           do i=1,6 
@@ -481,21 +481,44 @@
    ! there are e.g. 15 indizes (but we use only 1..13 etc.
    ! the whole jpl ephemeries file handling should be changed . See new version of testeph1.f or even use *.bsp and *.ksc (i.e. spice kernel files instead)
    ! why are we determining old/new twice it already has been done in fszer2! Just lazy
-      read(nrfile,rec=1)ttl,(cnam(k),k=1,oldmax),ss,ncon,au,emrat,                      &
-     & ((ipt(i,j),i=1,3),j=1,12),numde,lpt,(cnam(l),l=401,ncon)             ! bad dependency 401!
+   !
+   ! Do it again
+!      read(nrfile,rec=1)ttl,(cnam(k),k=1,oldmax),ss,ncon,au,emrat,                      &
+!     & ((ipt(i,j),i=1,3),j=1,12),numde,lpt,(cnam(l),l=401,ncon)             ! bad dependency 401!
       
-      IF(ncon.le.oldmax)THEN 
-        READ(nrfile,rec=2)(cval(i),i=1,oldmax) 
-      ELSE 
-        READ(nrfile,rec=2)(cval(i),i=1,ncon) 
-      ENDIF
+!      IF(ncon.le.oldmax)THEN
+!        READ(nrfile,rec=2)(cval(i),i=1,oldmax)
+!      ELSE
+!        READ(nrfile,rec=2)(cval(i),i=1,ncon)
+!      ENDIF
                                                                   
 !     read(nrfile,rec=2)cval
                                                                         
-      do i=1,3 
-      ipt(i,13)=lpt(i) 
-      enddo 
-      nrl=0 
+!      do i=1,3
+!      ipt(i,13)=lpt(i)
+!      enddo
+!      nrl=0
+
+      read(nrfile,rec=1)ttl,(cnam(k),k=1,oldmax),ss,ncon
+      if (ncon .le. oldmax) then
+        read(nrfile,rec=1)ttl, (cnam(k), k=1, oldmax), ss, ncon, au, emrat, &
+     &       ((ipt(i,j), i=1,3), j=1,12), numde, (ipt(i,13), i=1,3),        &
+     &                                           (ipt(i,14), i=1,3),        &
+     &                                           (ipt(i,15), i=1,3)
+      else
+        read(nrfile,rec=1)ttl, (cnam(k),k=1,oldmax), ss, ncon, au, emrat, &
+     &       ((ipt(i,j), i=1,3), j=1,12), numde, (ipt(i,13), i=1,3),      &
+     &       (cnam(j),j=k,ncon),                                          &
+     &                                       (ipt(i,14), i=1,3),          &
+     &                                       (ipt(i,15), i=1,3)
+
+      endif
+      read(nrfile,rec=2)(cval(i),i=1,ncon)
+
+      nrl = 0
+!      close(nrfile)
+
+
                                                                         
       endif ! first
 !                                                                       
