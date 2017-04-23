@@ -6,13 +6,13 @@ all_17: AST17.bep
 
 distclean: clean	
 clean: 
-	-(rm -f *.bep *.bai core gmon.out *~ *.*~ *.done *.log CPV.bop CPV.inc CPV.clo)
+	-(rm -f *.bep *.bai core gmon.out *~ *.*~ *.done *.log CPV.bop CPV.inc CPV.clo *.x)
 	-(rm -f AST17.bop AST17.inc)
 
-CPV_noiter.bep:
+CPV_noiter.bep: prepare
 	-(cp -p testout/CPV_noiter.bop CPV.bop)
 	-(cp -p testout/CPV.inc CPV.inc)
-	echo CPV | time bineph.x
+	echo CPV | time ./bineph.x
 	-(diff CPV.bai testout/CPV0.bai)
 	-(cp -p testout/CPV0.bai testout/CPV0.bai_noiter)
 	-(cp -p testout/CPV0.bep testout/CPV0.bep_noiter)
@@ -32,5 +32,8 @@ AST17.bep :
 	-(cp -p testout/CPV.bep_431_fcct CPV.bep)
 	echo AST17 | bineph.x
 
-../../src/bineph/bineph.x:
-	(cd ../..; make)
+prepare: 
+	cp ../../bin/bineph.x .
+	
+#../../src/bineph/bineph.x:
+#	(cd ../..; make)

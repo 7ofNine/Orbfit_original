@@ -1,8 +1,8 @@
 all: fitobs orbfit bineph
-	(cd bineph; make)
+#	(cd bineph; make)
 	(cd fitobs; make)
 	(cd orbfit; make)
-	(cd moid; make)
+#	(cd moid; make)
 	(cd orbit9; make)
 
 clean: distclean

@@ -1,7 +1,7 @@
 include ../make.flags
 include modules.flags
 
-all: bineph.x
+all: bineph.x deliver
 
 # Executables
 
@@ -23,5 +23,7 @@ clean:
 distclean: clean
 	../lib/deinst_src
 
+deliver:
+	cp bineph.x ../../bin/.
 # Dependencies
 include make.dep

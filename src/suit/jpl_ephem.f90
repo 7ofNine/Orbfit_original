@@ -42,7 +42,7 @@
                                                                         
       dimension ss(3) 
                                                                         
-      integer ipt(3,12),lpt(3) 
+      integer ipt(3,15)
       save 
 ! end change                                                            
                                                                         
@@ -70,19 +70,19 @@
 !     CALL rdncha('JPLDE.','file',namfil,.false.,found,fail1,fail)      
 !      IF(fail1) STOP '**** fszer2: abnormal end ****'                  
 !      IF(.NOT.found) THEN                                              
-!  jpleph is alwaysthe external name of the binary ephemeris file       
+!  jpleph is always the external name of the binary ephemeris file       
           namfil='jpleph' 
-          INQUIRE(FILE=namfil,EXIST=found) 
+          INQUIRE(FILE=namfil, EXIST=found) 
           IF(found) GOTO 2 
-          namtmp=libdir(1:lenld)//namfil 
-          namfil=namtmp 
+          namtmp = libdir(1:lenld)//namfil 
+          namfil = namtmp 
           INQUIRE(FILE=namfil,EXIST=found) 
           IF(found) GOTO 2 
           GOTO 10 
 !      END IF                                                           
     2 CONTINUE 
 !  nrfile is the internal unit number used for the ephemeris file       
-      CALL filass(nrfile,namfil) 
+      CALL filass(nrfile, namfil) 
 ! end of change                                                         
                                                                         
 !  *****************************************************************    
@@ -101,35 +101,43 @@
      &       status='old',                                              &
      &       err=10)                                                    
                                                                         
-      read(nrfile,rec=1)ttl,(cnam(k),k=1,oldmax),ss,ncon,au,emrat,ipt,numde,lpt 
-      WRITE(*,155) numde
-155   FORMAT(' JPL planetary ephemerides DE',I3)
+      read(nrfile,rec=1)ttl,(cnam(k),k=1,oldmax),ss,ncon
+      if (ncon .le. oldmax) then
+        read(nrfile,rec=1)ttl, (cnam(k), k=1, oldmax), ss, ncon, au, emrat, &
+     &       ((ipt(i,j), i=1,3), j=1,12), numde, (ipt(i,13), i=1,3),        &
+     &                                           (ipt(i,14), i=1,3),        &
+     &                                           (ipt(i,15), i=1,3)
+      else
+        if (ncon .gt. nmax) then
+            stop 'Number of ephemeries constants too big for fsizer2'
+        endif
+        read(nrfile,rec=1)ttl, (cnam(k),k=1,oldmax), ss, ncon, au, emrat, &
+     &       ((ipt(i,j), i=1,3), j=1,12), numde, (ipt(i,13), i=1,3),      &
+     &       (cnam(j),j=k,ncon),                                          &
+     &                                       (ipt(i,14), i=1,3),          &
+     &                                       (ipt(i,15), i=1,3)
+
+      endif
       close(nrfile) 
                                                                         
 !  find the number of ephemeris coefficients from the pointers          
                                                                         
       kmx = 0 
-      khi = 0 
+      khi = 0
                                                                         
-      do 1 i = 1,12 
+      do 1 i = 1,15
          if (ipt(1,i) .gt. kmx) then 
             kmx = ipt(1,i) 
-            khi = i 
+            khi = i
          endif 
     1 continue 
-      if (lpt(1) .gt. kmx) then 
-          kmx = lpt(1) 
-          khi = 13 
-      endif 
-                                                                        
+
+! the default number of components is 3 except for 12 (nutation) and 15 (TT-TDB)
       nd = 3 
       if (khi .eq. 12) nd=2 
+      if (khi .eq. 15) nd=1
                                                                         
-      if(khi.eq.13) then 
-          ksize = 2*(lpt(1)+nd*lpt(2)*lpt(3)-1) 
-      else 
-          ksize = 2*(ipt(1,khi)+nd*ipt(2,khi)*ipt(3,khi)-1) 
-      endif 
+      ksize = 2 * (ipt(1,khi) + nd*ipt(2,khi) * ipt(3,khi) - 1)
                                                                         
       return 
                                                                         
@@ -449,9 +457,9 @@
                                                                         
 ! **********************************************************************
                                                                         
-!        call fszer1(nrecl,ksize,nrfile,namfil) 
-         call fszer2(nrecl,ksize,nrfile,namfil) 
-!        call fszer3(nrecl,ksize,nrfile,namfil)                         
+!        call fszer1(nrecl,ksize,nrfile,namfil)                         
+         call fszer2(nrecl,ksize,nrfile,namfil)
+!        call fszer3(nrecl,ksize,nrfile,namfil)
                                                                         
       if(nrecl .eq. 0) write(*,*)'  ***** fszer is not working *****' 
                                                                         
@@ -468,9 +476,13 @@
      &       recl=irecsz,                                               &
      &       status='old',                                              &
      &       err=10)                                                    
-                                                                        
+
+   ! TODO: this oly works accidentaly beause some of the data in the newer ephemeries files are not being used.
+   ! there are e.g. 15 indizes (but we use only 1..13 etc.
+   ! the whole jpl ephemeries file handling should be changed . See new version of testeph1.f or even use *.bsp and *.ksc (i.e. spice kernel files instead)
+   ! why are we determining old/new twice it already has been done in fszer2! Just lazy
       read(nrfile,rec=1)ttl,(cnam(k),k=1,oldmax),ss,ncon,au,emrat,                      &
-     & ((ipt(i,j),i=1,3),j=1,12),numde,lpt,(cnam(l),l=401,ncon)                              
+     & ((ipt(i,j),i=1,3),j=1,12),numde,lpt,(cnam(l),l=401,ncon)             ! bad dependency 401!
       
       IF(ncon.le.oldmax)THEN 
         READ(nrfile,rec=2)(cval(i),i=1,oldmax) 
@@ -478,14 +490,14 @@
         READ(nrfile,rec=2)(cval(i),i=1,ncon) 
       ENDIF
                                                                   
-      !read(nrfile,rec=2)cval 
+!     read(nrfile,rec=2)cval
                                                                         
       do i=1,3 
       ipt(i,13)=lpt(i) 
       enddo 
       nrl=0 
                                                                         
-      endif 
+      endif ! first
 !                                                                       
 !       ********** main entry point **********                          
 !                                                                       

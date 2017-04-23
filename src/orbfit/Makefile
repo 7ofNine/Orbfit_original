@@ -1,7 +1,7 @@
 include ../make.flags
 include modules.flags
 
-all: orbfit.x
+all: orbfit.x deliver
 
 # Auxiliary routines (internal to orbfit)
 ORBAUX=ofod.o rdopt_of.o srtobs.o seltid.o ustsp.o ofclrf.o
@@ -37,5 +37,7 @@ windist:
 winclean:windist
 	@del ..\..\bin\orbfit.*
 
+deliver:
+	-(cp orbfit.x ../../bin/.)
 # Dependencies
 include make.dep

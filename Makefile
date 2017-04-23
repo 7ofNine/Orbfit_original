@@ -9,6 +9,7 @@ test:
 clean:
 	(cd src; make clean)
 	(cd lib; make clean)
+	 rm -f bin/*.x
 
 del_obsolete_files:
 	rm -f `cat dellist`
