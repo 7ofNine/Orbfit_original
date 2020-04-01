@@ -1,0 +1,40 @@
+ data from t=     1000.0000 to t=    99000.0000 no datapoints=   99
+  together         9900   step        2500
+part.sums, intervals=  4 from t=      750.0000 to t=    99250.0000
+  together          240  step          20
+ ============================================= 
+ Asteroid no. 588      
+ Libration ph: freq  4.249065D-02 per  147.872192 rms   6.9441D-01 ph   41.1885
+ =========== delta a,AU  mean=  4.9640D-03 sig=  2.2293D-02
+ harm= 1 S%  99.63 cost=  4.9460D-03
+ cos  -7.17268D-04          NaN         NaN   -Infinity
+ sin   3.14574D-02          NaN         NaN   -Infinity
+ harm= 2 S%   0.25 cost=  4.9653D-03
+ cos   9.02701D-06          NaN         NaN   -Infinity
+ sin  -1.58875D-03          NaN         NaN   -Infinity
+ harm= 3 S%   0.00 cost=  4.9640D-03
+ cos  -3.84820D-05          NaN         NaN   -Infinity
+ sin   4.08059D-05          NaN         NaN   -Infinity
+=========== libr ampl,rad  mean=  1.0720D+00 sig=  9.6552D-02
+ harm= 1 S%  67.89 cost=  1.0719D+00
+ cos   1.12515D-01          NaN         NaN   -Infinity
+ sin  -1.14137D-03          NaN         NaN   -Infinity
+ harm= 2 S%   0.05 cost=  1.0720D+00
+ cos  -2.90159D-03          NaN         NaN   -Infinity
+ sin  -2.38661D-05          NaN         NaN   -Infinity
+ harm= 3 S%   0.00 cost=  1.0720D+00
+ cos  -9.11555D-05          NaN         NaN   -Infinity
+ sin   5.74821D-05          NaN         NaN   -Infinity
+ =========== eccentricity 
+ forced  5 amp  4.07315D-02 ph  107.7340 S%   7.4644 cost   1.1557D-02 unc.   6.8619D-03
+ forced  6 amp  1.52962D-02 ph    1.9172 S%   2.0868 cost  -2.0098D-02 unc.  -7.4265D-04
+ forced  7 amp  2.95042D-02 ph   34.4473 S%   0.2243 cost  -6.7237D-03 unc.   7.4983D-03
+ Argument: freq  1.669703D-03 per      3763.054922 rms   4.3657D-02 ph -266.9071
+ Proper  1.032488D-01 arg  359.6584 S%  99.8867 c -1.8802D-02 unc  2.01D-04 rms 3.74D-03
+ =========== inclination 
+ Argument: freq -5.734047D-05 per   -109576.798998 rms   5.6868D-02 ph  -39.5151
+ Proper  9.907179D-02 arg    0.6014 S%  99.0269 c  5.1880D-03 unc -2.32D-03 rms 7.37D-03
+ ======== Libr. per : sig=         NaN del=   -Infinity
+ Proper e: sig         NaN del -1.7977+308 Fr.peri: sig         NaN del   -Infinity
+ Proper I: sig         NaN del -1.7977+308 Fr.node: sig         NaN del   -Infinity
+ ======== max. LCE  4.0972D-06 rms.res  2.0840D-02 cost  2.8302D+00 tlyap  2.4407D+05

@@ -101,13 +101,13 @@ SUBROUTINE force9(x,v,t,f,nd,idc,xxpla,ips,imem)
      f(3*j)=dd3(j)*dyy(3,j) 
 33 ENDDO
 ! Yarkovsky effect
-  IF(iyark.eq.3)THEN
+  IF(iyark.eq.3.or.iyark.eq.4)THEN
      DO jj=1,na
         j=nbod+jj-1 ! loop on asteroid only
         xb=x(3*j-2:3*j)
         vb=v(3*j-2:3*j)
-        CALL sec_nong9(xb,vb,s,sv,secacc)
-        f(3*j-2:3*j)=f(3*j-2:3*j)+secacc*dadt9(jj)
+        CALL sec_nong9(xb,vb,s,sv,secacc,iyark,dadt9(jj))
+        f(3*j-2:3*j)=f(3*j-2:3*j)+secacc
      ENDDO
   ENDIF
   IF(irelj2.gt.0)THEN

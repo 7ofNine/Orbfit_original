@@ -1,0 +1,102 @@
+ number of perturbers =           17
+ binary ephemerides file= AST17
+ perturbing asteroids used: 16 major perturbing asteroids plus Pluto
+ ngr_opt =  T
+ direct radiation pressure in the dynamical model =            1
+ direct radiation pressure coefficient =    0.0000000000000000     
+ Yarkovsky effect in the dynamical model =            3
+ A2 Yarkovsky parameter =    0.0000000000000000     
+ solve-for parameters selector (drpa2m, A2, or both) =            3
+ outgassing model =            0
+ A1 outgassing parameter =    0.0000000000000000     
+ A2 outgassing parameter =    0.0000000000000000     
+ A3 outgassing parameter =    0.0000000000000000     
+ delay outgassing parameter =    0.0000000000000000     
+ outgassing parameter to solve-for =            0
+ direct radiation pressure a-priori default value  F
+ Yarkovsky a-priori default value  F
+ first arc asteroid name= 2009BD
+ not a designation default value  F
+ second arc asteroid name default value= 
+ error model file= fcct14
+ number of columns/directions =           50
+ number of rows/points in ray =           50
+ number of columns/directions in the densified grid =          100
+ number of rows/points in ray in the densified grid =          100
+ sigma max in cobweb =    5.0000000000000000     
+ max absolute magnitude =    34.500000000000000     
+ use b-plane as target plane default value  T
+ mass given in a separate file default value  F
+ limit eccentricity =    1.9999000000000000     
+ max semimajor axis =    2000.0000000000000     
+ min semimajor axis =   0.29999999999999999     
+ max aphelion =    4000.0000000000000     
+ min perihelion =    1.0000000000000000E-003
+ max perihelion default value    0.0000000000000000     
+ shrink of Earth cross section default value    1.0000000000000000     
+ use of constant steps in IP is  F
+ max dist. for inclolinctp =   0.20000000000000001     
+  INPUT OF OBSERVATIONAL DATA, ARC 1
+ first object obs. file name default value= 2009BD
+ first object obs. directory name= mpcobs/
+ input_obs:          190  obs from mpcobs/2009BD.rwo
+  INPUT OF OBSERVATIONAL DATA, ARC 2
+ second object obs. file name default value= 
+  INPUT OF ORBITAL ELEMENTS, ARC 1
+ first arc asteroid name default value= 2009BD
+ first arc elements file= epoch/2009BD.eq0
+ input orbit file correctly read
+ EQU   1.0072109684446000        6.3224490296449999E-003  -4.0167279637940000E-002   2.8702609488759998E-003   1.7549358109590000E-003  0.74038257940246677        55137.563158689001      T   28.236000000000001       0.14999999999999999                0         500
+  INPUT OF ORBITAL ELEMENTS, ARC 2
+  DIFFERENTIAL CORRECTIONS
+  ARC 1
+  FULL DIFFERENTIAL CORRECTIONS
+ starting values EQU
+    1.007210968    0.006322449   -0.040167280    0.002870261    0.001754936    0.740382579    0.000000000    0.000000000
+ Close approach to EARTH on 2010/05/07.79448 55323.79448 MJD at 0.02349123 AU.
+ Close approach to EARTH on 2010/07/12.09477 55389.09477 MJD at 0.02722789 AU.
+ Close approach to EARTH on 2011/06/02.03602 55714.03602 MJD at 0.00231325 AU.
+ Close approach to EARTH on 2009/10/20.74863 55124.74863 MJD at 0.04438087 AU.
+ Close approach to EARTH on 2009/01/25.26773 54856.26773 MJD at 0.00458746 AU.
+ difcor iteration   1
+  RMS residuals =  1.3330D+00   norm corr =  8.5643D+00
+  new elem values
+    1.0072105    0.0063223   -0.0401672    0.0028703    0.0017549    0.7403835
+
+ nongrav   0.24217592884393557       -1.1552060532416752E-002
+ sigma(           7 )=   4.1125375530354877E-002
+ sigma(           8 )=   1.3524265631352319E-003
+ Close approach to EARTH on 2010/05/07.79144 55323.79144 MJD at 0.02349188 AU.
+ Close approach to EARTH on 2010/07/12.09829 55389.09829 MJD at 0.02722881 AU.
+ Close approach to EARTH on 2011/06/02.03602 55714.03602 MJD at 0.00231326 AU.
+ Close approach to EARTH on 2009/10/20.74945 55124.74945 MJD at 0.04438021 AU.
+ Close approach to EARTH on 2009/01/25.26772 54856.26772 MJD at 0.00458747 AU.
+ difcor iteration   2
+  RMS residuals =  4.4683D-01   norm corr =  4.9144D-02
+  new elem values
+    1.0072105    0.0063223   -0.0401672    0.0028703    0.0017549    0.7403835
+
+ nongrav   0.24212014648827510       -1.1548959597613054E-002
+ sigma(           7 )=   4.1125936242791525E-002
+ sigma(           8 )=   1.3520706185405280E-003
+==== OUTLIER REJECTION =======
+Residual norm =  4.46834E-01
+Chi2 threshold =  1.91343E+00
+No. of observations:
+          total     =  190
+          selected  =  186
+          rejected  =    0
+          recovered =    0
+Outlier rejection pass   1 after   2 single differential correction passes.
+There were   0 changes.
+ Final convergence loop after            1  outlier rejection loops.
+ Close approach to EARTH on 2010/05/07.79144 55323.79144 MJD at 0.02349188 AU.
+ Close approach to EARTH on 2010/07/12.09829 55389.09829 MJD at 0.02722881 AU.
+ Close approach to EARTH on 2011/06/02.03602 55714.03602 MJD at 0.00231326 AU.
+ Close approach to EARTH on 2009/10/20.74945 55124.74945 MJD at 0.04438021 AU.
+ Close approach to EARTH on 2009/01/25.26772 54856.26772 MJD at 0.00458747 AU.
+ done difcor iter.   1  RMS =  4.4678D-01 last corr. =  1.9666D-05
+ Done. Corrections small after            1  passes.
+Absol Magnitude: Old=28.24 New=28.24
+no. magnitude obs.= 163 with RMS  0.57
+no. rejected obs.=   0 in    1 passes.

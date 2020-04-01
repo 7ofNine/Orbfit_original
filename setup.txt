@@ -1,0 +1,20 @@
+Prerequisits: 
+	- Git installed
+	- Eclipse installed 
+	  Add CDT and Photran to Eclipse
+	  
+1) set up msys2 64 bit http://www.msys2.org/ 
+   - install as described above and update as described on the website above. This should always be done in the MSYS2 command prompt
+   - add packages 
+	base-devel
+	mingw-w64-x86_64-toolchain
+     using  pacman --needed -Syu <packagename> 
+     
+     until done. The prompts will tell if something is todo.
+     
+     set MINGW_HOME to your installation of MSYS2\MINGW (the mingw64 diretory)
+     In Eclipse  Preferences -> C/C++ -> Build -> Environment add Variable PATH:<msys64>\usr\bin (this makes it find your make)
+     
+
+
+	

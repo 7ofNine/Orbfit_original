@@ -142,6 +142,7 @@ SUBROUTINE predic_obs(el,idsta,tobs,type,       &
   USE station_coordinates 
   USE orbit_elements                 
   USE semi_linear
+  USE close_app, ONLY: fix_mole,kill_propag
 ! ============= input ==================================================
   TYPE(orbit_elem), INTENT(IN) :: el ! elements
   DOUBLE PRECISION, INTENT(IN) :: tobs ! elements, epoch time, obs.time
@@ -234,6 +235,7 @@ SUBROUTINE predic_obs(el,idsta,tobs,type,       &
      CALL alph_del2 (el,tobs,idsta,obs4,ider,nd,dobde,      &
             &   pha,dis,rdot,dsun,elo,gallat,ecllat,twobo1,elev,&
             &   elsun,elmoon,gallon,sub_ast_station_light, umbra,penumbra) 
+     IF(fix_mole.and.kill_propag) RETURN
      alpha=obs4(1)
      delta=obs4(2)
      IF(ider.gt.0)THEN
@@ -271,6 +273,7 @@ SUBROUTINE predic_obs(el,idsta,tobs,type,       &
      idstarad=idsta*10000+idsta
      CALL r_rdot (el,tobs,idstarad,tech,posr,posr,alpha,delta,       &
      &       nd,daddet(1,1), daddet(1,2),ider) 
+     IF(fix_mole.and.kill_propag) RETURN
      hmagn=0.d0 
   ELSE
 ! output adot...... 
@@ -1140,7 +1143,7 @@ SUBROUTINE alph_del (el,tauj,iocj,pos,vel,ider,twobo,nd,alj,dej,dade,ddde, &
      &       adot0,ddot0,pha0,dis0,dsun0,elo0,gallat0,elomoon0,gallon0)
   USE propag_state
   USE orbit_elements
-  USE close_app, ONLY : kill_propag  
+  USE close_app, ONLY : fix_mole,kill_propag  
 ! kill_propag e' gia' nelle definizioni.....
 !=========================================================
 ! INPUT
@@ -1185,7 +1188,7 @@ SUBROUTINE alph_del (el,tauj,iocj,pos,vel,ider,twobo,nd,alj,dej,dade,ddde, &
 !  WRITE(11,899)tauj,xast,xobs
 !899 FORMAT(f15.9,3(1x,f15.12),3(1x,f15.12),3(1x,f15.12),3(1x,f15.12))
 !  IF(kill_propag) STOP '**** alph_del: kill propag *****'
-  IF(kill_propag) RETURN
+  IF(fix_mole.and.kill_propag) RETURN
 ! Computation of observations                                           
   CALL oss_dif(xast,xea,tauj,iocj,pos,vel,alj,dej,ider,dadx,dddx,&
      &       adot,ddot,pha,dis,dsun,elo,gallat,elomoon,gallon)

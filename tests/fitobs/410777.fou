@@ -1,0 +1,91 @@
+ number of perturbers =           17
+ binary ephemerides file= AST17
+ perturbing asteroids used: 16 major perturbing asteroids plus Pluto
+ ngr_opt =  T
+ direct radiation pressure in the dynamical model =            0
+ direct radiation pressure coefficient =    0.0000000000000000     
+ Yarkovsky effect in the dynamical model =            3
+ A2 Yarkovsky parameter =    0.0000000000000000     
+ solve-for parameters selector (drpa2m, A2, or both) =            2
+ outgassing model =            0
+ A1 outgassing parameter =    0.0000000000000000     
+ A2 outgassing parameter =    0.0000000000000000     
+ A3 outgassing parameter =    0.0000000000000000     
+ delay outgassing parameter =    0.0000000000000000     
+ outgassing parameter to solve-for =            0
+ direct radiation pressure a-priori default value  F
+ Yarkovsky a-priori is  T
+ a-priori nominal value for Yarkovsky parameter =    0.0000000000000000     
+ first arc asteroid name= 410777
+ not a designation default value  F
+ second arc asteroid name default value= 
+ error model file= fcct14
+ number of columns/directions =           50
+ number of rows/points in ray =           50
+ number of columns/directions in the densified grid =          100
+ number of rows/points in ray in the densified grid =          100
+ sigma max in cobweb =    5.0000000000000000     
+ max absolute magnitude =    34.500000000000000     
+ use b-plane as target plane default value  T
+ mass given in a separate file default value  F
+ limit eccentricity =    1.9999000000000000     
+ max semimajor axis =    2000.0000000000000     
+ min semimajor axis =   0.29999999999999999     
+ max aphelion =    4000.0000000000000     
+ min perihelion =    1.0000000000000000E-003
+ max perihelion default value    0.0000000000000000     
+ shrink of Earth cross section default value    1.0000000000000000     
+ use of constant steps in IP is  F
+ max dist. for inclolinctp =   0.20000000000000001     
+  INPUT OF OBSERVATIONAL DATA, ARC 1
+ first object obs. file name default value= 410777
+ first object obs. directory name= mpcobs/
+ input_obs:          292  obs from mpcobs/410777.rwo
+  INPUT OF OBSERVATIONAL DATA, ARC 2
+ second object obs. file name default value= 
+  INPUT OF ORBITAL ELEMENTS, ARC 1
+ first arc asteroid name default value= 410777
+ first arc elements file= epoch/410777.eq0
+ input orbit file correctly read
+ EQU   1.1626729653269601      -0.46066378714989298       0.17488127729114000        4.5515424809329996E-003   2.7004980226847001E-002  0.44878523946135590        56013.440131620002      T   22.129999999999999       0.14999999999999999                0         500
+  INPUT OF ORBITAL ELEMENTS, ARC 2
+  DIFFERENTIAL CORRECTIONS
+  ARC 1
+  FULL DIFFERENTIAL CORRECTIONS
+ starting values EQU
+    1.162672965   -0.460663787    0.174881277    0.004551542    0.027004980    0.448785239    0.000000000    0.000000000
+ Close approach to EARTH on 2014/04/01.38195 56748.38195 MJD at 0.10093073 AU.
+ Close approach to VENUS on 2011/12/24.03906 55919.03906 MJD at 0.04300792 AU.
+ Close approach to EARTH on 2010/10/24.62297 55493.62297 MJD at 0.07024719 AU.
+ Close approach to EARTH on 2009/03/27.64993 54917.64993 MJD at 0.00417283 AU.
+ difcor iteration   1
+  RMS residuals =  4.3353D-01   norm corr =  7.3960D-01
+  new elem values
+    1.1626730   -0.4606638    0.1748813    0.0045515    0.0270049    0.4487852
+
+ nongrav   -1.7064800391520217E-005
+ sigma(           7 )=   3.2391092767298287E-004
+ Close approach to EARTH on 2014/04/01.38195 56748.38195 MJD at 0.10093075 AU.
+ Close approach to VENUS on 2011/12/24.03906 55919.03906 MJD at 0.04300793 AU.
+ Close approach to EARTH on 2010/10/24.62297 55493.62297 MJD at 0.07024716 AU.
+ Close approach to EARTH on 2009/03/27.64993 54917.64993 MJD at 0.00417282 AU.
+ difcor iteration   2
+  RMS residuals =  4.2589D-01   norm corr =  8.9625D-05
+  new elem values
+    1.1626730   -0.4606638    0.1748813    0.0045515    0.0270049    0.4487852
+
+ nongrav   -1.7065413267172687E-005
+ sigma(           7 )=   3.2391092754400802E-004
+==== OUTLIER REJECTION =======
+Residual norm =  4.25887E-01
+Chi2 threshold =  1.11997E+00
+No. of observations:
+          total     =  292
+          selected  =  292
+          rejected  =    0
+          recovered =    0
+Outlier rejection pass   1 after   2 single differential correction passes.
+There were   0 changes.
+Absol Magnitude: Old=22.13 New=22.13
+no. magnitude obs.= 243 with RMS  0.44
+no. rejected obs.=   0 in    1 passes.

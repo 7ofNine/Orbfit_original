@@ -77,7 +77,7 @@ LOGICAL :: mixcl
 ! Initialization
 IF(first) THEN
     first=.false.
-    doit=(errmod.ne.' '.AND.errmod.ne.'cbm10'.AND.errmod.ne.'fcct14')
+    doit=(errmod.ne.' '.AND.errmod.ne.'cbm10'.AND.errmod.ne.'fcct14'.AND.errmod.ne.'vfcc17')
     errmodkeep=errmod
 ! Input of correlation model
     IF(doit) THEN

@@ -1107,9 +1107,9 @@ END SUBROUTINE str_clan
         dmin=MIN(dmin,r)
 ! check for confidence regions too small to allow to get to the MOID    
         IF(va_tp%dd2_ds.gt.0.d0)THEN 
-           dmin1=va_tp%d-(va_tp%sigma+sigma_max)*va_tp%stretch
+           dmin1=va_tp%b-(va_tp%sigma+sigma_max)*va_tp%stretch
         ELSEIF(va_tp%dd2_ds.lt.0.d0)THEN 
-           dmin1=va_tp%d-(sigma_max-va_tp%sigma)*va_tp%stretch 
+           dmin1=va_tp%b-(sigma_max-va_tp%sigma)*va_tp%stretch 
         ENDIF
         dmin=MAX(dmin,dmin1) 
         va_tp%minposs=dmin 

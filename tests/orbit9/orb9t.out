@@ -1,0 +1,23 @@
+; orbit9t vers. a, output file
+  nsamp=          20  njump=          40  nsamp2=         100  njump2=           8
+ in input            4  planets: KEP HEL ECLM00
+barycenter corr.flag  1 no. inner pla.   4
+; planetary inverse masses as used
+  9.9999402303776952D-01  1.0473486309727623D+03  3.4979017677866345D+03
+  2.2902950523706935D+04  1.9412259775973071D+04
+  planetary initial conditions as read
+   1  asteroids required,   1  with LCE; numbers:
+  588      
+  asteroid 588        OK
+  file end looking for 588                 record            2
+  Selection of the best stepsize, maximum=  0.10000000000000001     
+ orbit no.  1 sugg.step= 0.1000 a,e= 5.202  0.0489
+ orbit no.  2 sugg.step= 0.1000 a,e= 9.558  0.0532
+ orbit no.  3 sugg.step= 0.1000 a,e=19.142  0.0497
+ orbit no.  4 sugg.step= 0.1000 a,e=29.975  0.0075
+ orbit no.  5 sugg.step= 0.0592 a,e= 5.206  0.2508
+ min. step required  0.059159 selected  0.056818 nn=    22
+  input complete, starting from t=   0.0000000000000000     
+  filters parameters
+           7   165.00000000000000        1.2500000000000000               49   687.50000000000000        1.2500000000000000     
+ end orbit9t, time =        100000.0000

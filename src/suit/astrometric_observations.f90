@@ -14,7 +14,7 @@
 ! SUBROUTINE write_rwo_pos(unit,obs,obsw)
 ! SUBROUTINE write_rwo_header(unit, error_model, nrec, rms, rmsmag)
 
-! SUBROUTINE read_rwo(file,obs,obsw,n,error_model,rms,rmsmag,unit0,eof0)
+! SUBROUTINE read_rwo(file,obs,obsw,n,error_model,rms,rmsag,unit0,eof0)
 ! input observations in .rwo format
 ! SUBROUTINE read_rwo_rec(unit,nr,obs1,obsw1,error, eof)
 ! SUBROUTINE read_rwo_header(unit, error_model, error, rms, rmsmag)
@@ -68,17 +68,19 @@ PUBLIC drop_geopos, add_geopos
 
 ! common data for sub-module observ_rms_bias
 ! to read cbm10.sta
-   INTEGER, PARAMETER :: nstarmsx=100
-   DOUBLE PRECISION, SAVE  :: rmsstabin(2,nstarmsx) ! rms(a*cosd), rmsd, in arcsec
-   CHARACTER*3, SAVE :: obscodrms(nstarmsx) ! star catalog code (' '=not known)
-   INTEGER, SAVE :: indstarms(nstarmsx) ! lexicographic sort index
-   INTEGER, SAVE :: nstarms ! actual number
-! to read cbm10.rules, fcct14.rules
-   INTEGER, PARAMETER :: nrulesx=100
-   DOUBLE PRECISION, SAVE  :: rmsbin(2,nrulesx) ! rms(a*cosd), rmsd, in arcsec
-   CHARACTER*4, SAVE :: obscatcod(nrulesx) ! star catalog code (' '=not known)
-   INTEGER, SAVE :: indrules(nrulesx) ! lexicographic sort index
-   INTEGER, SAVE :: nrules ! actual number
+   INTEGER,          PARAMETER      :: nstarmsx=100
+   DOUBLE PRECISION, SAVE           :: rmsstabin(2,nstarmsx)     ! rms(a*cosd), rmsd, in arcsec
+   CHARACTER*3,      SAVE           :: obscodrms(nstarmsx)       ! star catalog code (' '=not known)
+   INTEGER,          SAVE           :: indstarms(nstarmsx)       ! lexicographic sort index
+   INTEGER,          SAVE           :: nstarms                   ! actual number
+! to read cbm10.rules, fcct14.rules, vfcc17.rules
+   INTEGER,          PARAMETER      :: nrulesx=300
+   DOUBLE PRECISION, SAVE           :: rmsbin(2,nrulesx)         ! rms(a*cosd), rmsd, in arcsec
+   CHARACTER*4,      SAVE           :: obscatcod(nrulesx)        ! star catalog code (' '=not known)
+   CHARACTER*6,      SAVE           :: errmod_rules(nrulesx)     ! star catalog code (' '=not known)
+   INTEGER,          SAVE           :: indrules(nrulesx)         ! lexicographic sort index
+   DOUBLE PRECISION, SAVE           :: mjd_date_rules(2,nrulesx) ! lower_date, upper_date (range date for rule)
+   INTEGER,          SAVE           :: nrules                    ! actual number
 ! public routines
 PUBLIC observ_rms
 
@@ -167,7 +169,7 @@ TYPE ast_obs
 END TYPE ast_obs
 ! Generic astrometric observation
 TYPE ast_obs_direct
-   CHARACTER(LEN=name_len)       :: objdes     ! object designation
+   CHARACTER(LEN=name_len)         :: objdes     ! object designation
    CHARACTER(LEN=1)                :: type       ! observation type:
                                                  !    O = optical
                                                  !    R = radar range
@@ -281,6 +283,8 @@ TYPE ast_wbsr
    INTEGER                        :: sel_mag    ! selection flag for magnitude:
                                                 !   0 = not used
                                                 !   1 = used in LS fit
+                                                !   3 = forced to be used in LS fit
+                                                !   4 = forced to be neglected in LS fit
    DOUBLE PRECISION               :: res_mag    ! residual of magnitude
    LOGICAL                        :: resm_def   ! TRUE if residual of magnitude is defined
 END TYPE ast_wbsr
@@ -547,23 +551,23 @@ END SUBROUTINE write_rwo_rad
 ! writes one record of a .rwo file with an optical observation
 ! If satellite, roving only the first line
 SUBROUTINE write_rwo_opt(unit,obs,obsw,error,nrec)
-  INTEGER,        INTENT(IN) :: unit 
-  TYPE(ast_obs),  INTENT(IN) :: obs
-  TYPE(ast_wbsr), INTENT(IN) :: obsw
-  LOGICAL, INTENT(OUT) :: error
-  INTEGER,     INTENT(INOUT) :: nrec
-  INTEGER     :: iday,month,year,nd2,ra_h,ra_min,dec_deg,dec_min,hh,mm,iss 
-  DOUBLE PRECISION  :: day,hour,ra_sec,resnor,dec_sec,rss
-  CHARACTER(LEN=1)  :: ra_sign,dec_sign
-  CHARACTER(LEN=5)  :: dec_sec_str
-  CHARACTER(LEN=6)  :: ra_sec_str
-  CHARACTER(LEN=8)  :: rmsa_str,biasa_str,rmsd_str,biasd_str
-  CHARACTER(LEN=9)  :: resida_str,residd_str,chi_str
-  CHARACTER(LEN=13) :: sday
-  CHARACTER(LEN=19) :: mag_str
-  CHARACTER(LEN=49) :: tmp1
-  INTEGER, EXTERNAL :: lench
-! check obs.type
+  INTEGER,        INTENT(IN)    :: unit 
+  TYPE(ast_obs),  INTENT(IN)    :: obs
+  TYPE(ast_wbsr), INTENT(IN)    :: obsw
+  LOGICAL,        INTENT(OUT)   :: error
+  INTEGER,        INTENT(INOUT) :: nrec
+  INTEGER                       :: iday,month,year,nd2,ra_h,ra_min,dec_deg,dec_min,hh,mm,iss 
+  DOUBLE PRECISION              :: day,hour,ra_sec,resnor,dec_sec,rss
+  CHARACTER(LEN=1)              :: ra_sign,dec_sign
+  CHARACTER(LEN=5)              :: dec_sec_str
+  CHARACTER(LEN=6)              :: ra_sec_str
+  CHARACTER(LEN=8)              :: rmsa_str,biasa_str,rmsd_str,biasd_str
+  CHARACTER(LEN=9)              :: resida_str,residd_str,chi_str
+  CHARACTER(LEN=13)             :: sday
+  CHARACTER(LEN=19)             :: mag_str
+  CHARACTER(LEN=49)             :: tmp1
+  INTEGER, EXTERNAL             :: lench
+! check obs.type 
   IF(obs%type.ne.'O'.and.obs%type.ne.'S')THEN
      error=.true.
      WRITE(ierrou,223) obs%type, nrec+1
@@ -702,8 +706,14 @@ SUBROUTINE write_rwo_pos(unit,obs,obsw)
 !         CALL rotpn(rot,'ECLM','J2000',0.d0,'EQUM','J2000',0.d0)
      equpos=MATMUL(roteceq,obs%obspos)
      equpos=equpos*conv
-     WRITE(unit,205) tmp3,obs%par_unit,equpos,obs%obscod_s(1:3)
-205  FORMAT(A,1X,A1,3F12.4,1X,A)
+     SELECT CASE (obs%par_unit)
+     CASE('1')
+        WRITE(unit,204) tmp3,obs%par_unit,equpos,obs%obscod_s(1:3)
+204     FORMAT(A,1X,A1,3F12.4,1X,A)
+     CASE('2')
+        WRITE(unit,205) tmp3,obs%par_unit,equpos,obs%obscod_s(1:3)
+205     FORMAT(A,1X,A1,3F12.8,1X,A)
+     END SELECT
   END IF
 ! Second record for roving observatory observations
   IF(obs%obscod_s == '247') THEN
@@ -719,7 +729,7 @@ END SUBROUTINE write_rwo_pos
 CHARACTER(LEN=11) FUNCTION radar_resid_string(value,defined)
   DOUBLE PRECISION, INTENT(IN) :: value
   LOGICAL,          INTENT(IN) :: defined
-  LOGICAL :: fixed
+  LOGICAL                      :: fixed
   radar_resid_string=' '
   IF(.NOT.defined) RETURN
   fixed=.true.
@@ -890,31 +900,33 @@ SUBROUTINE read_rwo_rec(unit,nr,obs1,obsw1,error, eof)
 USE station_coordinates
 USE reference_systems
   INTEGER,         INTENT(IN)   :: unit      ! input unit
-  INTEGER,        INTENT(INOUT) :: nr        ! record counter
+  INTEGER,         INTENT(INOUT):: nr        ! record counter
   TYPE(ast_obs),   INTENT(OUT)  :: obs1      ! observation
   TYPE(ast_wbsr),  INTENT(OUT)  :: obsw1     ! weights residuals etc.
   LOGICAL,         INTENT(OUT)  :: error,eof ! error flag, end of file
   INCLUDE 'parcmc.h90'                       ! comment character
-  CHARACTER(LEN=200) :: record
-  DOUBLE PRECISION                 :: day,sec,sect,ra_sec,dec_sec,coord1,acc_coord1,rms_coord1,conv
-  DOUBLE PRECISION, DIMENSION(3)   :: equpos,geopos,bfpos0
-  CHARACTER(LEN=1)   :: dec_sign,col1,col2
-  CHARACTER(LEN=3)   :: scale,obscod_s1
-  CHARACTER(LEN=5)   :: mag_field
-  CHARACTER(LEN=8)   :: rmsa_str,rmsd_str
-  CHARACTER(LEN=9)   :: resida_str,residd_str,chi_str
-  CHARACTER(LEN=11)  :: resid_rad,bias_rad
-  CHARACTER(LEN=19)  :: mag_str
-  CHARACTER(LEN=33)  :: tmp3
-  LOGICAL            :: force1
-  INTEGER :: year,month,iday,mjd,mjdt,ra_h,ra_min,dec_deg,dec_min,len_mag_field,pos_point,n_dec_mag
-  INTEGER :: hh,mm,iss,ipr0,ipr1,code_tx,code_rx
-  DOUBLE PRECISION, EXTERNAL :: tjm1
-  CHARACTER(LEN=16)  :: stname
-! ======================================
+  CHARACTER(LEN=200)            :: record
+  DOUBLE PRECISION              :: day,sec,sect,ra_sec,dec_sec,coord1,acc_coord1,rms_coord1,conv
+  DOUBLE PRECISION, DIMENSION(3):: equpos,geopos,bfpos0
+  CHARACTER(LEN=1)              :: dec_sign,col1,col2
+  CHARACTER(LEN=3)              :: scale,obscod_s1
+  CHARACTER(LEN=5)              :: mag_field
+  CHARACTER(LEN=8)              :: rmsa_str,rmsd_str
+  CHARACTER(LEN=9)              :: resida_str,residd_str,chi_str
+  CHARACTER(LEN=11)             :: resid_rad,bias_rad
+  CHARACTER(LEN=19)             :: mag_str
+  CHARACTER(LEN=33)             :: tmp3
+  LOGICAL                       :: force1
+  INTEGER                       :: year,month,iday,mjd,mjdt,ra_h,ra_min,dec_deg,dec_min
+  INTEGER                       :: len_mag_field,pos_point,n_dec_mag
+  INTEGER                       :: hh,mm,iss,ipr0,ipr1,code_tx,code_rx
+  DOUBLE PRECISION, EXTERNAL    :: tjm1
+  CHARACTER(LEN=16)             :: stname
+  CHARACTER(LEN=40)             :: tem_rec
+  ! ======================================
 ! setup of flags
-  error=.false.
-  eof=.false.
+  error=.FALSE.
+  eof=.FALSE.
 ! read one record
 3 CONTINUE
   READ(unit,201,END=2) record
@@ -1054,8 +1066,16 @@ USE reference_systems
            CALL observer_position(obs1%time_tdt,obs1%obspos,obs1%obsvel,OBSCODE=obs1%obscod_i)
         END SELECT
      CASE ('S')
-        READ(unit,205,ERR=1) tmp3,obs1%par_unit,equpos,obscod_s1
-205     FORMAT(A33,1X,A1,3F12.4,1X,A)
+        READ(unit,205,ERR=1) tmp3,obs1%par_unit,tem_rec
+205     FORMAT(A33,1X,A1,A40)
+        SELECT CASE (obs1%par_unit)
+        CASE('1')
+           READ(tem_rec,204) equpos,obscod_s1
+204        FORMAT(3F12.4,1X,A)
+        CASE('2')
+           READ(tem_rec,202) equpos,obscod_s1
+202        FORMAT(3F12.8,1X,A)
+        END SELECT
         nr=nr+1
         tmp3(14:14)='S'
         IF(tmp3 /= record(1:33)) GOTO 1
@@ -1971,18 +1991,18 @@ END FUNCTION radar_station
 
 SUBROUTINE input_obs(obsdir,astna0,precob,error_model,obs0,obs,obsw,m,iun20,change,rms,rmsmag)
 
-CHARACTER(LEN=*),             INTENT(IN)  :: obsdir      ! input dir. where files astna0.rwo, astna0.obs and astna0.rad are
-CHARACTER(LEN=*),             INTENT(IN)  :: astna0      ! asteroid name
-INTEGER,                      INTENT(IN)  :: iun20       ! messages unit
-LOGICAL,                      INTENT(IN)  :: precob      ! .TRUE. for overwriting .rwo, .FALSE. for updating .rwo
-CHARACTER(LEN=*),             INTENT(IN)  :: error_model ! error model file name
-LOGICAL,                      INTENT(OUT) :: obs0        ! successful input
-LOGICAL,                      INTENT(OUT) :: change      ! existence of new data
-INTEGER,                      INTENT(OUT) :: m           ! number of observations
-TYPE(ast_obs),  DIMENSION(:), INTENT(OUT) :: obs         ! observations
-TYPE(ast_wbsr), DIMENSION(:), INTENT(OUT) :: obsw        ! weights and possibly residuals
-DOUBLE PRECISION,             INTENT(OUT), OPTIONAL :: rms    ! RMS of astrometric fit (-1 = undefined)
-DOUBLE PRECISION,             INTENT(OUT), OPTIONAL :: rmsmag ! RMS of photometric fit (-1 = undefined)
+CHARACTER(LEN=*),             INTENT(IN)            :: obsdir      ! input dir. where files astna0.rwo, astna0.obs and astna0.rad are
+CHARACTER(LEN=*),             INTENT(IN)            :: astna0      ! asteroid name
+INTEGER,                      INTENT(IN)            :: iun20       ! messages unit
+LOGICAL,                      INTENT(IN)            :: precob      ! .TRUE. for overwriting .rwo, .FALSE. for updating .rwo
+CHARACTER(LEN=*),             INTENT(IN)            :: error_model ! error model file name
+LOGICAL,                      INTENT(OUT)           :: obs0        ! successful input
+LOGICAL,                      INTENT(OUT)           :: change      ! existence of new data
+INTEGER,                      INTENT(OUT)           :: m           ! number of observations
+TYPE(ast_obs),  DIMENSION(:), INTENT(OUT)           :: obs         ! observations
+TYPE(ast_wbsr), DIMENSION(:), INTENT(OUT)           :: obsw        ! weights and possibly residuals
+DOUBLE PRECISION,             INTENT(OUT), OPTIONAL :: rms         ! RMS of astrometric fit (-1 = undefined)
+DOUBLE PRECISION,             INTENT(OUT), OPTIONAL :: rmsmag      ! RMS of photometric fit (-1 = undefined)
 
 ! observation numbers: maximum, space left
 INCLUDE 'parobx.h90'
@@ -2623,13 +2643,12 @@ SUBROUTINE rdanga(string,angle,acc,error)
 END SUBROUTINE rdanga
 
 !SUB-MODULE observ_bias_weight
-! Version 4.2 Copyright OrbFit consortium 2010
-! ====================================================================
-! ASTROW_BIAS_CBM
-!     Computation of bias from catalogs, and 
-!          Computation of a-priori RMS of observations 
-!          from Chesley, Baer and Monet (2010) error model
-! ====================================================================
+! Version 5.0 Copyright OrbFit consortium 2018
+! ==========================================================================
+! OBSERV_RMS
+!     Computation of bias from catalogs nd of a-priori RMS of observations
+!
+! ==========================================================================
 !
 ! INPUT:    OBS          - observations
 !           ERROR_MODEL  - name of weighing scheme to be used
@@ -2640,32 +2659,90 @@ END SUBROUTINE rdanga
 ! OUTPUT:   OBSW         - observation weights
 !
 SUBROUTINE observ_rms(obs,error_model,init,obsw,n)
- INTEGER,                      INTENT(IN)    ::  n  ! number of obs
- LOGICAL,                      INTENT(IN)    :: init! if true reset obsw 
- TYPE(ast_obs), DIMENSION(n),  INTENT(INOUT) :: obs ! observations
- CHARACTER*(*),                INTENT(IN)    :: error_model ! code for errmod
- TYPE(ast_wbsr), DIMENSION(n), INTENT(INOUT) :: obsw ! when init=.false.,
-! =================END INTERFACE========================================
- INTEGER i,j, k ,jj
- DOUBLE PRECISION rmsrmi,rmsvmi, rmstmp(2), t2
+ INTEGER       ,               INTENT(IN)    :: n           ! number of obs
+ LOGICAL       ,               INTENT(IN)    :: init        ! if true reset obsw 
+ TYPE(ast_obs) , DIMENSION(n), INTENT(INOUT) :: obs         ! observations
+ CHARACTER*(*) ,               INTENT(IN)    :: error_model ! code for errmod
+ TYPE(ast_wbsr), DIMENSION(n), INTENT(INOUT) :: obsw        ! when init=.false.,
+! ============================== END INTERFACE =====================================
+ INTEGER i,j,k,jj,iline,it,ic,ip
  INTEGER unit ! for input of RMS values
- INTEGER ncat,lench
+ INTEGER low_year,low_month,low_day,up_year,up_month,up_day
+ INTEGER ntech, ncat, nprog, lench, len_ld, len_ud
+ DOUBLE PRECISION rmsrmi,rmsvmi,rmstmp(2),t2,lower_mjd,upper_mjd
+! DOUBLE PRECISION, DIMENSION(2,nrulesx)    :: mjd_date_rules
 ! Get default magnitude weights from a function magrms_new in same module
- CHARACTER q*4, obscod*3, catcod*1, qq*3
- CHARACTER*6 catcodstr
+ CHARACTER q*4, catcod*1, qq*3
+ CHARACTER obscod*3, tech_type*5, catcodstr*10, program_code*10, lower_date*10, upper_date*10
  INTEGER ind(n),nob(n), nob1(n) !sorting by time, number obs in batch
+ INTEGER ios ! for errors and end of file management
  TYPE(ast_obs), DIMENSION(n) :: obs1
- DOUBLE PRECISION, PARAMETER :: gapmax=8.d0/24.d0 ! 8 hours max gap 
-! ======================================================================
+ DOUBLE PRECISION, PARAMETER :: gapmax=8.d0/24.d0 ! 8 hours max gap
+ DOUBLE PRECISION, EXTERNAL :: tjm1
+! ==================================================================================
  LOGICAL, SAVE :: first
  DATA first/.true./
-! ==============initialize arrays of RMS rules==========================
+! ======================= initialize arrays of RMS rules ===========================
  IF(first)THEN
-    IF(error_model.eq.'fcct14')THEN
+    IF(error_model.EQ.'vfcc17')THEN
+       CALL filopl(unit,'weights/vfcc17.rules')
+       nrules=0
+       iline=0
+       ERR:DO
+          READ(unit, 301, IOSTAT=ios)obscod,tech_type,catcodstr,program_code,lower_date,upper_date,rmstmp
+301       FORMAT(A3,3X,A5,3X,A10,3X,A3,3X,A10,3X,A10,3X,F5.2,2X,F5.2)
+          IF(ios > 0) THEN
+             WRITE(*,*) "Error in reading weights/vfcc17.rules"
+          ELSE IF(ios < 0) THEN
+             EXIT ERR
+          ELSE
+             CALL rmsp(tech_type,ntech)
+             CALL rmsp(catcodstr,ncat)
+             CALL rmsp(program_code,nprog)
+             IF(lower_date(1:4).EQ.'    ')THEN
+                lower_mjd=-99999.d0
+             ELSE
+                READ(lower_date(9:10),'(I2)') low_day
+                READ(lower_date(6:7) ,'(I2)') low_month
+                READ(lower_date(1:4) ,'(I4)') low_year
+                lower_mjd=tjm1(low_day,low_month,low_year,0.d0)
+             ENDIF
+             IF(upper_date(1:4).EQ.'    ')THEN
+                upper_mjd=99999.d0
+             ELSE
+                READ(upper_date(9:10),'(I2)') up_day
+                READ(upper_date(6:7) ,'(I2)') up_month
+                READ(upper_date(1:4) ,'(I4)') up_year
+                upper_mjd=tjm1(up_day,up_month,up_year,0.d0)
+             ENDIF
+             DO it=1, ntech
+                DO ic=1, ncat
+                   IF(nprog.EQ.0) THEN
+                      iline=iline+1
+                      nprog=1
+                      errmod_rules(iline)=obscod//tech_type(it:it)//catcodstr(ic:ic)//' '
+                      mjd_date_rules(1:2,iline)=(/lower_mjd,upper_mjd/)
+                      rmsbin(1:2,iline)=rmstmp
+                    ELSE
+                      DO ip=1, nprog
+                         iline=iline+1
+                         errmod_rules(iline)=obscod//tech_type(it:it)//catcodstr(ic:ic)//program_code(ip:ip)
+                         mjd_date_rules(1:2,iline)=(/lower_mjd,upper_mjd/)
+                         rmsbin(1:2,iline)=rmstmp
+                      ENDDO
+                   ENDIF
+                ENDDO
+             ENDDO
+             nrules=iline
+          ENDIF
+       ENDDO ERR
+97     CALL filclo(unit,' ')
+       !       CALL heapsortnachlo(obscatcod,nrules,4,q,indrules)       
+    ELSEIF(error_model.EQ.'fcct14')THEN
        CALL filopl(unit,'weights/fcct14.rules')
        nrules=0
        DO j=1, nrulesx
-          READ(unit, 101, END=97)obscod,catcodstr,rmstmp
+          READ(unit, 101, END=89)obscod,catcodstr,rmstmp
 101       FORMAT(A3,3X,A6,2X,F5.2,2X,F5.2)
           ncat=lench(catcodstr)-2
           DO i=1,ncat
@@ -2674,9 +2751,9 @@ SUBROUTINE observ_rms(obs,error_model,init,obsw,n)
           ENDDO          
           nrules=nrules+ncat
        ENDDO
-97     CALL filclo(unit,' ')
+89     CALL filclo(unit,' ')
        CALL heapsortnachlo(obscatcod,nrules,4,q,indrules)
-    ELSEIF(error_model.eq.'cbm10')THEN
+    ELSEIF(error_model.EQ.'cbm10')THEN
 ! rules for observatory, whatever star catalog
        CALL filopl(unit,'weights/cbm10.sta')
        READ(unit,*) ! skip header
@@ -2708,16 +2785,17 @@ SUBROUTINE observ_rms(obs,error_model,init,obsw,n)
 ! for each observations build the corresponding weights and bias record
  DO  i=1,n
     IF(init) obsw(i)=undefined_ast_wbsr
-    IF(obs(i)%type.eq.'O'.and.(error_model.eq.'cbm10'.OR.error_model.eq.'fcct14'))THEN
-       CALL astrow_bias_cbm(error_model,obs(i),obsw(i))
+    IF((obs(i)%type.EQ.'O'.OR.obs(i)%type.EQ.'S').AND.&
+         & (error_model.EQ.'cbm10'.OR.error_model.EQ.'fcct14'.OR.error_model.EQ.'vfcc17'))THEN
+       CALL astrow_bias(error_model,obs(i),obsw(i))
 ! magnitude weigthing
        obsw(i)%rms_mag=magrms_new(obs(i)%mag_str,obs(i)%time_tdt,obs(i)%obscod_i,obs(i)%tech)
-    ELSEIF(obs(i)%type.eq.'O'.or.obs(i)%type.eq.'S')THEN
+    ELSEIF(obs(i)%type.EQ.'O'.OR.obs(i)%type.EQ.'S')THEN
 ! astrometric (telescope) observations; get weight
        CALL astrow_nobias(error_model,obs(i),obsw(i))
 ! magnitude weigthing
        obsw(i)%rms_mag=magrms_new(obs(i)%mag_str,obs(i)%time_tdt,obs(i)%obscod_i,obs(i)%tech)
-    ELSEIF(obs(i)%type.eq.'R')THEN
+    ELSEIF(obs(i)%type.EQ.'R')THEN
 ! weighting of radar data is given with observations, but there is
 ! minimum credible (for a given acccuracy of the models)
        rmsrmi=1.d-3/aukm
@@ -2725,7 +2803,7 @@ SUBROUTINE observ_rms(obs,error_model,init,obsw,n)
        obsw(i)%rms_coord(2)=9.d9
        obsw(i)%rms_mag=9.d9
        obsw(i)%bias_coord(2)=0.d0
-    ELSEIF(obs(i)%type.eq.'V')THEN
+    ELSEIF(obs(i)%type.EQ.'V')THEN
        rmsvmi=1.d-3/aukm
        obsw(i)%rms_coord(2)=MAX(obs(i)%acc_coord(2),rmsvmi)
        obsw(i)%rms_coord(1)=9.d9
@@ -2749,23 +2827,24 @@ SUBROUTINE observ_rms(obs,error_model,init,obsw,n)
 ! find number of observations in batch from same station
   nob1=0  
   DO  j=1,n
-    IF(obs1(j)%type.eq.'O'.and.error_model.eq.'fcct14')THEN
-       IF(nob1(j).gt.0)CYCLE ! already done
+     IF(obs1(j)%type.EQ.'O'.AND.(error_model.EQ.'fcct14'.OR.error_model.EQ.'vfcc17'))THEN
+     !IF(obs1(j)%type.EQ.'O'.AND.error_model.EQ.'fcct14')THEN
+       IF(nob1(j).GT.0)CYCLE ! already done
        t2=obs1(j)%time_tdt
        nob1(j)=1
-       IF(obs1(j)%tech.eq.'X'.or.obs1(j)%tech.eq.'x')CYCLE
+       IF(obs1(j)%tech.EQ.'X'.OR.obs1(j)%tech.EQ.'x')CYCLE
 ! find batch from same station
        DO k=j+1,n
-          IF(obs1(k)%time_tdt-t2.gt.gapmax) EXIT ! batch finished
-          IF(obs1(k)%obscod_s.eq.obs1(j)%obscod_s)THEN
+          IF(obs1(k)%time_tdt-t2.GT.gapmax) EXIT ! batch finished
+          IF(obs1(k)%obscod_s.EQ.obs1(j)%obscod_s)THEN
              nob1(j)=nob1(j)+1
              t2=obs1(k)%time_tdt
           ENDIF
        ENDDO
 ! assign number of obs in batch to each obs in batch
        DO k=j+1,n
-          IF(obs1(k)%time_tdt-t2.gt.gapmax) EXIT ! batch finished
-          IF(obs1(k)%obscod_s.eq.obs1(j)%obscod_s)THEN
+          IF(obs1(k)%time_tdt-t2.GT.gapmax) EXIT ! batch finished
+          IF(obs1(k)%obscod_s.EQ.obs1(j)%obscod_s)THEN
              nob1(k)=nob1(j)
           ENDIF
        ENDDO      
@@ -2779,24 +2858,42 @@ SUBROUTINE observ_rms(obs,error_model,init,obsw,n)
   DO k=1,n
     jj=ind(k)
     nob(jj)=nob1(k)
-    IF(nob(jj).ne.0)THEN
-       IF(.NOT.obsw(jj)%force_w(1))THEN
-          obsw(jj)%rms_coord(1)=obsw(jj)%rms_coord(1)*sqrt(1.d0*nob(jj))
-       END IF
-       IF(.NOT.obsw(jj)%force_w(2))THEN
-          obsw(jj)%rms_coord(2)=obsw(jj)%rms_coord(2)*sqrt(1.d0*nob(jj))
-       END IF
+    !IF(nob(jj).GE.3)THEN
+    IF(nob(jj).NE.0)THEN
+       IF(error_model.EQ.'vfcc17') THEN
+          IF(nob(jj).GE.5) THEN
+             IF(.NOT.obsw(jj)%force_w(1))THEN
+                obsw(jj)%rms_coord(1)=obsw(jj)%rms_coord(1)*SQRT(nob(jj)*0.25d0)
+             END IF
+             IF(.NOT.obsw(jj)%force_w(2))THEN
+                obsw(jj)%rms_coord(2)=obsw(jj)%rms_coord(2)*SQRT(nob(jj)*0.25d0)
+             END IF
+          ENDIF
+       ELSE
+          IF(.NOT.obsw(jj)%force_w(1))THEN
+             obsw(jj)%rms_coord(1)=obsw(jj)%rms_coord(1)*sqrt(1.d0*nob(jj))
+          END IF
+          IF(.NOT.obsw(jj)%force_w(2))THEN
+             obsw(jj)%rms_coord(2)=obsw(jj)%rms_coord(2)*sqrt(1.d0*nob(jj))
+          END IF
+       ENDIF
     ENDIF
-  ENDDO
+ ENDDO
 
 END SUBROUTINE observ_rms
-! ====================================================================
-! ASTROW_BIAS_CBM
-!     Computation of bias from catalogs, and 
-!          Computation of a-priori RMS of observations 
-!          from Chesley, Baer and Monet (2010) error model
-!          also from Farnocchia, Chesley, Chamberlin, Tholen (2014)
-! ====================================================================
+! ============================================================================
+! ASTROW_BIAS
+!     Computation of bias from catalogs, and of a-priori RMS of observations.
+!     Error models:
+!          CBM10 from Chesley, Baer and Monet (2010)
+!          FCCT14 from Farnocchia, Chesley, Chamberlin, Tholen (2014)
+!          VFCC17 from Veres, Farnocchia, Chesley, Chamberlin (2017)
+! Last version introduces VFCC17 with different format in weight/vfcc17.rules
+! wrt the previous error model.
+!
+! Written by Andrea Chessa @SpaceDyS 2017
+! Updated by Fabrizio Bernardi @SpaceDyS 2018
+! ============================================================================
 !
 ! INPUT:    OBS          - observations
 !           ERROR_MODEL  - name of weighing scheme to be used
@@ -2805,29 +2902,36 @@ END SUBROUTINE observ_rms
 !                          information different from weight/bias is preserved)
 !
 ! OUTPUT:   OBSW         - observation weights
-! ====================================================================
-SUBROUTINE astrow_bias_cbm(error_model,obs,obsw)
+! ============================================================================
+SUBROUTINE astrow_bias(error_model,obs,obsw)
   USE cat_debias
   IMPLICIT NONE
-  TYPE(ast_obs),INTENT(INOUT)    :: obs
-  CHARACTER*(*),INTENT(IN)    :: error_model
-  TYPE(ast_wbsr), INTENT(INOUT) :: obsw ! when init=.false.,
-                   ! information different from weight/bias is preserved
-! ===============end interface===============================
+  TYPE(ast_obs)   , INTENT(INOUT) :: obs
+  CHARACTER*(*)   , INTENT(IN)    :: error_model
+  TYPE(ast_wbsr)  , INTENT(INOUT) :: obsw ! when init=.false.,
+! information different from weight/bias is preserved
+! =============================end interface==================================
   CHARACTER*2 catcode
-  LOGICAL biasflag
-  DOUBLE PRECISION bias_ra,bias_dec,pmRA,pmDEC,rmsmin,tdt,rmsa,rmsd,deltat
-  CHARACTER observ*3, obscat*4
-  LOGICAL ermrms
-  INTEGER indobs
-  DOUBLE PRECISION, PARAMETER   :: mjd2000=51544.d0
-! ============================================================
-  IF(error_model.NE.'cbm10'.AND.error_model.NE.'fcct14')THEN
+  DOUBLE PRECISION                :: bias_ra, bias_dec, pmRA, pmDEC, rmsmin, tdt, rmsa, rmsd, deltat
+  CHARACTER                       :: observ*3, obscat*4, final_rule*6
+  CHARACTER                       :: tech, catalog, prog_code
+  LOGICAL                         :: ermrms, biasflag, first_err
+  INTEGER                         :: i, j, ioc, iocall, indobs, num_non_zero, idx_non_zero, gen_ind
+  INTEGER                         :: num_star, num_blank, final_star, final_blank
+  INTEGER                         :: idx_selected(nrules), idx_selected_all(nrules)         
+  DOUBLE PRECISION, PARAMETER     :: mjd2000=51544.d0
+  ! ============================================================================
+  
+  IF(error_model.NE.'cbm10'.AND.error_model.NE.'fcct14'.AND.error_model.NE.'vfcc17')THEN
      WRITE(*,*)  '**** WRONG ERROR MODEL ***** ',error_model
      STOP
   ENDIF
+  first_err=.TRUE.
   tdt=obs%time_utc
   observ=obs%obscod_s
+  tech=obs%tech
+  catalog=obs%catcodmpc(2:2)
+  prog_code=obs%note
 ! years since 2000
   deltat=(tdt-mjd2000)/365.25d0
 ! find bias
@@ -2838,18 +2942,113 @@ SUBROUTINE astrow_bias_cbm(error_model,obs,obsw)
     obsw%bias_coord(1)=(bias_ra+pmRA*deltat/1000.d0)*radsec/cos(obs%coord(2)) !!!Checked with Steve
     obsw%bias_coord(2)=(bias_dec+pmDEC*deltat/1000.d0)*radsec
   ELSE
-    obsw%bias_coord(1:2)=0.d0
+     obsw%bias_coord(1:2)=0.d0
   ENDIF
-! new weighting for fcct14
-  IF(error_model.eq.'fcct14')THEN
-! first set default based on observation technique
+  !####################!
+  ! ERROR MODEL VFCC17 !
+  !####################!
+  IF(error_model.eq.'vfcc17')THEN
+     IF(obs%tech.eq.'x'.or.obs%tech.eq.'X')THEN
+        rmsa=999.d0
+        rmsd=999.d0
+     ENDIF
+     ! ioc = index obs code
+     ! idx_selected index containig the obscode
+     ioc=0
+     iocall=0
+     idx_selected=0
+     idx_non_zero=1
+     ! selection of all records containing the obscode
+     DO j=1, nrules
+        IF(index(errmod_rules(j),observ).NE.0) THEN
+           ioc=ioc+1
+           idx_selected(ioc)=j ! store the selected index containig the obscode
+        ENDIF
+        IF(index(errmod_rules(j),'ALL').NE.0) THEN
+           iocall=iocall+1
+           idx_selected_all(iocall)=j ! store the selected index containig the 'ALL' obscode
+           IF(index(errmod_rules(j),'C').NE.0) THEN
+              gen_ind=j ! This is for the generic astrometric data
+           ENDIF
+        ENDIF
+     ENDDO
+     ! if the record is not found, we select the standard for ALL
+     IF(ioc.EQ.0) THEN
+        observ='ALL'
+        ioc=iocall
+        DO i=1, iocall
+           idx_selected(i)=idx_selected_all(i)
+        ENDDO
+     ENDIF
+     !idx_non_zero=COUNT(idx_selected.NE.0)
+     ! read the selected rules and check the specific field (tech, cat, prog), line by line.
+     ! if not the index becomes zero
+     ! the mj_date comparison occurs after the selection of the rules
+     idx_non_zero=ioc
+     DO i=1, idx_non_zero
+        IF(tdt.GT.mjd_date_rules(1,idx_selected(i)).AND.tdt.LE.mjd_date_rules(2,idx_selected(i))) THEN
+           IF(index(errmod_rules(idx_selected(i)),observ//tech//catalog//prog_code).NE.0) THEN
+              rmsa=rmsbin(1,idx_selected(i))
+              rmsd=rmsbin(2,idx_selected(i))
+              GOTO 330
+           ENDIF
+        ENDIF
+     ENDDO
+     DO i=1, idx_non_zero
+        IF(tdt.GT.mjd_date_rules(1,idx_selected(i)).AND.tdt.LE.mjd_date_rules(2,idx_selected(i))) THEN
+           IF(index(errmod_rules(idx_selected(i)),observ//tech//catalog//' ').NE.0) THEN
+              rmsa=rmsbin(1,idx_selected(i))
+              rmsd=rmsbin(2,idx_selected(i))
+              GOTO 330
+           ENDIF
+        ENDIF
+     ENDDO
+     DO i=1, idx_non_zero
+        IF(tdt.GT.mjd_date_rules(1,idx_selected(i)).AND.tdt.LE.mjd_date_rules(2,idx_selected(i))) THEN
+           IF(index(errmod_rules(idx_selected(i)),observ//tech//'*'//prog_code).NE.0) THEN
+              rmsa=rmsbin(1,idx_selected(i))
+              rmsd=rmsbin(2,idx_selected(i))
+              GOTO 330
+           ENDIF
+        ENDIF
+     ENDDO
+     DO i=1, idx_non_zero
+        IF(tdt.GT.mjd_date_rules(1,idx_selected(i)).AND.tdt.LE.mjd_date_rules(2,idx_selected(i))) THEN
+           IF(index(errmod_rules(idx_selected(i)),observ//tech//'* ').NE.0) THEN
+              rmsa=rmsbin(1,idx_selected(i))
+              rmsd=rmsbin(2,idx_selected(i))
+              GOTO 330
+           ENDIF
+        ENDIF
+     ENDDO
+     DO i=1, idx_non_zero
+        IF(tdt.GT.mjd_date_rules(1,idx_selected(i)).AND.tdt.LE.mjd_date_rules(2,idx_selected(i))) THEN
+           IF(index(errmod_rules(idx_selected(i)),observ//'**'//prog_code).NE.0) THEN
+              rmsa=rmsbin(1,idx_selected(i))
+              rmsd=rmsbin(2,idx_selected(i))
+              GOTO 330
+           ELSE
+              rmsa=rmsbin(1,gen_ind)
+              rmsd=rmsbin(2,gen_ind)
+           ENDIF
+        ELSE
+           rmsa=rmsbin(1,gen_ind)
+           rmsd=rmsbin(2,gen_ind)
+        ENDIF
+     ENDDO
+ 
+  !####################!
+  ! ERROR MODEL FCCT14 !
+  !####################!
+  ELSEIF(error_model.eq.'fcct14')THEN
+     ! first set default based on observation technique
      IF(obs%tech.eq.'P'.or.obs%tech.eq.'A'.or.obs%tech.eq.'N')THEN
-! Photografic: Default value of RMS (time dependent, in arcsec)
-! Before 1890
+        ! Photografic: Default value of RMS (time dependent, in arcsec)
+        ! Before 1890
         IF(tdt.LT.11368.d0) THEN
            rmsa=3.d0
            rmsd=3.d0
-! From 1890 to 1950
+           ! From 1890 to 1950
         ELSE IF(tdt.LT.33282.d0) THEN
            rmsa=2.d0
            rmsd=2.d0
@@ -2916,7 +3115,9 @@ SUBROUTINE astrow_bias_cbm(error_model,obs,obsw)
            ENDIF
         ENDIF
      ENDIF
-! old weighting for cbm10
+  !####################!
+  ! ERROR MODEL CBM10  !
+  !####################!
   ELSEIF(error_model.eq.'cbm10')THEN
      IF(biasflag)THEN
 ! use rms appropriate for observatory, whatever the star catalog
@@ -2941,7 +3142,7 @@ SUBROUTINE astrow_bias_cbm(error_model,obs,obsw)
                  rmsd=rmsbin(2,indobs)
                  ermrms=.true.
               ELSE
-!              WRITE(iwarou,'(A,A,A,A,A,F11.5)')'astrow_bias_cbm: case without weights ',obscat, &
+!              WRITE(iwarou,'(A,A,A,A,A,F11.5)')'astrow_bias: case without weights ',obscat, &
 !    &     ' Observatory: ',observ, ' Time UTC: ',obs%time_utc
                  numwar=numwar+1
                  ermrms=.false.
@@ -2988,7 +3189,7 @@ SUBROUTINE astrow_bias_cbm(error_model,obs,obsw)
                  rmsd=rmsbin(2,indobs)
                  ermrms=.true.
               ELSE
-!              WRITE(iwarou,'(A,A,A,A,A,F11.5)')'astrow_bias_cbm: case without weights ',obscat,  &
+!              WRITE(iwarou,'(A,A,A,A,A,F11.5)')'astrow_bias: case without weights ',obscat,  &
 !&         ' Observatory: ',observ, ' Time UTC: ',obs%time_utc
                  numwar=numwar+1
                  ermrms=.false.
@@ -3022,13 +3223,13 @@ SUBROUTINE astrow_bias_cbm(error_model,obs,obsw)
      ENDIF
   ENDIF
 ! change rms value only if it is not forced
-  IF(.not.obsw%force_w(1))THEN 
+330 IF(.not.obsw%force_w(1))THEN 
      obsw%rms_coord(1)=MAX(obs%acc_coord(1),rmsa)*radsec/cos(obs%coord(2))
   ENDIF
   IF(.not.obsw%force_w(2))THEN
      obsw%rms_coord(2)=MAX(obs%acc_coord(2),rmsd)*radsec
   ENDIF
-END SUBROUTINE astrow_bias_cbm
+END SUBROUTINE astrow_bias
 ! ====================================================================
 ! ASTROW_NOBIAS
 ! No bias from catalogs, assign RMS
@@ -3046,17 +3247,17 @@ END SUBROUTINE astrow_bias_cbm
 !           DECSTEP   -  Decision steps of RMS assignment
 !
 SUBROUTINE astrow_nobias(error_model,obs,obsw)
-  TYPE(ast_obs),  INTENT(IN)    :: obs         ! observation
-  CHARACTER*(*),  INTENT(IN)    :: error_model ! code for errmod
+  TYPE(ast_obs) , INTENT(IN)    :: obs         ! observation
+  CHARACTER*(*) , INTENT(IN)    :: error_model ! code for errmod
   TYPE(ast_wbsr), INTENT(INOUT) :: obsw        ! assigned weight
 
 ! ==============END INTERFACE==================================
 !mpctyp,tdt,idsta,acca,accd,        &
 !     &        rmsa,rmsd,biasa,biasd,decstep)
-  DOUBLE PRECISION tdt,acca,accd
-  CHARACTER*(1) mpctyp
-  DOUBLE PRECISION rmsa,rmsd,biasa,biasd, rmsmin
-  LOGICAL error
+  DOUBLE PRECISION              :: tdt,acca,accd
+  CHARACTER*(1)                 :: mpctyp
+  DOUBLE PRECISION              :: rmsa,rmsd,biasa,biasd, rmsmin
+  LOGICAL                       :: error
 ! =============================================================
 ! no bias anyway
   obsw%bias_coord(1:2)=0.d0

@@ -423,71 +423,99 @@
 
  END SUBROUTINE find_pos_roots
 
-! Energy w.r.t the Sun
- SUBROUTINE energy_sun(r_rdot,c,n_rho,n_rdot,E_sun)
+ !============================================================!                  
+ ! ENERGY_SUN                                                 !
+ !============================================================!
+ ! Energy w.r.t. the Sun and flags definition.                !
+ !============================================================!
+ SUBROUTINE energy_sun(r_rdot,c,n_rho,n_rdot,use_nominal,E_lim,rmin,E_sun,inside_AR,succ_flag)
    USE fund_const
-   ! Begin interface
-   DOUBLE PRECISION, INTENT(IN)  :: r_rdot(0:n_rho,0:n_rdot,2) ! Coordinates of the cobweb/grid points
-   DOUBLE PRECISION, INTENT(IN)  :: c(0:5)                     ! Coefficients
-   INTEGER,          INTENT(IN)  :: n_rho, n_rdot              ! Grid dimension
-   DOUBLE PRECISION, INTENT(OUT) :: E_sun(0:n_rho,0:n_rdot)    ! Energy w.r.t the sun
-   ! End interface
-   INTEGER          ::  i,j            ! Loop indices
-   DOUBLE PRECISION ::  W_rho, S_rho   ! Computation of the energy
-   
-   E_sun = 0.d0
-   DO i=1,n_rho
-      DO j=1,n_rdot
-         W_rho = c(2)*r_rdot(i,j,1)**2 + c(3)*r_rdot(i,j,1) + c(4)
-         S_rho = r_rdot(i,j,1)**2 + c(5)*r_rdot(i,j,1) + c(0)
-         E_sun(i,j) = (r_rdot(i,j,2)**2 + c(1)*r_rdot(i,j,2) + W_rho - 2*gms/SQRT(S_rho))
+   !=======================================================================================================
+   DOUBLE PRECISION, INTENT(IN)    :: r_rdot(0:n_rho,0:n_rdot,2)  ! (rho,rhodot) of the cobweb/grid points
+   DOUBLE PRECISION, INTENT(IN)    :: c(0:5)                      ! Coefficients of V(r)
+   INTEGER,          INTENT(IN)    :: n_rho, n_rdot               ! Grid dimensions
+   LOGICAL,          INTENT(IN)    :: use_nominal                 ! If true, do cobweb; if false, grid is used
+   DOUBLE PRECISION, INTENT(IN)    :: E_lim                       ! Limiting energy
+   DOUBLE PRECISION, INTENT(IN)    :: rmin                        ! Minimum value for rho
+   DOUBLE PRECISION, INTENT(OUT)   :: E_sun(0:n_rho,0:n_rdot)     ! Energy w.r.t the Sun
+   LOGICAL,          INTENT(OUT)   :: inside_AR(0:n_rho,0:n_rdot) ! TRUE if the point is inside the AR
+   INTEGER,          INTENT(INOUT) :: succ_flag(0:n_rho,0:n_rdot) ! Succ flag
+   !=======================================================================================================
+   INTEGER          :: i,j         ! Loop indices
+   DOUBLE PRECISION :: W_rho,S_rho ! Computation of the energy
+   !=======================================================================================================
+   E_sun     = 0.d0
+   inside_AR = .FALSE.
+   succ_flag = 0
+   DO i=0,n_rho
+      DO j=0,n_rdot
+         IF(i.EQ.0 .AND. j.NE.0) CYCLE
+         IF(i.NE.0 .AND. j.EQ.0) CYCLE
+         IF(i.EQ.0 .AND. j.EQ.0 .AND. (.NOT.use_nominal)) CYCLE
+         W_rho      = c(2)*r_rdot(i,j,1)**2 + c(3)*r_rdot(i,j,1) + c(4)
+         S_rho      = r_rdot(i,j,1)**2 + c(5)*r_rdot(i,j,1) + c(0)
+         E_sun(i,j) = (r_rdot(i,j,2)**2 + c(1)*r_rdot(i,j,2) + W_rho - 2*gms/SQRT(S_rho))*0.5d0
+         ! Exclude from the AR the points with E > E_lim
+         IF(r_rdot(i,j,1).GT.rmin .AND. E_sun(i,j).LE.E_lim)THEN
+            inside_AR(i,j) = .TRUE.
+         ELSE
+            succ_flag(i,j) = 2
+         END IF
       END DO
    END DO
  END SUBROUTINE energy_sun
 
-! Energy w.r.t the Earth
- SUBROUTINE energy_earth(att,xogeo,vogeo,r_rdot,n_rho,n_rdot,E_earth)
+
+ !============================================================!                  
+ ! ENERGY_EARTH                                               !
+ !============================================================!
+ ! Energy w.r.t. the Earth.                                   !
+ !============================================================!
+ SUBROUTINE energy_earth(att,xogeo,vogeo,r_rdot,n_rho,n_rdot,use_nominal,E_earth)
    USE fund_const
-   USE planet_masses,       ONLY: gmearth
-   ! Begin interface
+   USE planet_masses, ONLY: gmearth
+   !=======================================================================================================
    DOUBLE PRECISION, INTENT(IN)  :: att(4)                     ! Angles
    DOUBLE PRECISION, INTENT(IN)  :: xogeo(3)                   ! Geocentric observer coordinates, equatorial  
    DOUBLE PRECISION, INTENT(IN)  :: vogeo(3)                   ! Geocentric observer coordinates velocity, equatorial
    DOUBLE PRECISION, INTENT(IN)  :: r_rdot(0:n_rho,0:n_rdot,2) ! Coordinates of the cobweb/grid points
    INTEGER,          INTENT(IN)  :: n_rho, n_rdot              ! Grid dimension
+   LOGICAL,          INTENT(IN)  :: use_nominal                ! If true, do cobweb; if false, grid is used
    DOUBLE PRECISION, INTENT(OUT) :: E_earth(0:n_rho,0:n_rdot)  ! Energy w.r.t the Earth
-   ! End interface
-   INTEGER                     :: i,j                        ! Loop indices
-   DOUBLE PRECISION            :: rhat(3)                    ! Unit vector in the obs direction
-   DOUBLE PRECISION            :: rhalpha(3)                 ! Derivative of rhat w.r.t. alpha
-   DOUBLE PRECISION            :: rhdelta(3)                 ! Derivative of rhat w.r.t. delta
-   DOUBLE PRECISION            :: rgeo(3)                    ! Geocentric position of the small body
-   DOUBLE PRECISION            :: rdotgeo(3)                 ! Geocentric velocity of the small body
-   DOUBLE PRECISION            :: dgeo                       ! Geocentric distance of the small body
-   DOUBLE PRECISION            :: vgeo2                      ! Squared geocentric velocity magnitude
-   DOUBLE PRECISION            :: prscal                     ! Scalar product
-   DOUBLE PRECISION            :: vsize                      ! Norm of a vector
-
-   !========== ENERGY W.R. to EARTH ==================================
-   ! 2-body energy w.r. to Earth
-   ! unit vec along obs, geocentric equatorial
-   rhat(1)=cos(att(1))*cos(att(2))
-   rhat(2)=sin(att(1))*cos(att(2))
-   rhat(3)=sin(att(2))
-   rhalpha(1)=-sin(att(1))*cos(att(2))
-   rhalpha(2)=cos(att(1))*cos(att(2))
-   rhalpha(3)=0.d0
-   rhdelta(1)=-cos(att(1))*sin(att(2))
-   rhdelta(2)=-sin(att(1))*sin(att(2))
-   rhdelta(3)=cos(att(2))
+   !=======================================================================================================
+   INTEGER          :: i,j        ! Loop indices
+   DOUBLE PRECISION :: rhat(3)    ! Unit vector in the obs direction
+   DOUBLE PRECISION :: rhalpha(3) ! Derivative of rhat w.r.t. alpha
+   DOUBLE PRECISION :: rhdelta(3) ! Derivative of rhat w.r.t. delta
+   DOUBLE PRECISION :: rgeo(3)    ! Geocentric position of the small body
+   DOUBLE PRECISION :: rdotgeo(3) ! Geocentric velocity of the small body
+   DOUBLE PRECISION :: dgeo       ! Geocentric distance of the small body
+   DOUBLE PRECISION :: vgeo2      ! Squared geocentric velocity magnitude
+   DOUBLE PRECISION :: prscal     ! Scalar product
+   DOUBLE PRECISION :: vsize      ! Norm of a vector
+   !=======================================================================================================
+   ! Unit vector along observer (geocentric equatorial)
+   rhat(1)    =  COS(att(1))*COS(att(2))
+   rhat(2)    =  SIN(att(1))*COS(att(2))
+   rhat(3)    =  SIN(att(2))
+   rhalpha(1) = -SIN(att(1))*COS(att(2))
+   rhalpha(2) =  COS(att(1))*COS(att(2))
+   rhalpha(3) =  0.d0
+   rhdelta(1) = -COS(att(1))*SIN(att(2))
+   rhdelta(2) = -SIN(att(1))*SIN(att(2))
+   rhdelta(3) =  COS(att(2))
+   ! Energy w.r.t. Earth
    E_earth = 0.d0
-   DO i=1,n_rho
-      DO j=1,n_rdot
-         rgeo=xogeo + rhat*r_rdot(i,j,1)
-         dgeo=vsize(rgeo)
-         rdotgeo=vogeo + r_rdot(i,j,2)*rhat + r_rdot(i,j,1)*(rhalpha*att(3) + rhdelta*att(4))
-         vgeo2=prscal(rdotgeo,rdotgeo)
-         E_earth(i,j) =vgeo2/2 -gmearth/dgeo;
+   DO i=0,n_rho
+      DO j=0,n_rdot
+         IF(i.EQ.0 .AND. j.NE.0) CYCLE
+         IF(i.NE.0 .AND. j.EQ.0) CYCLE
+         IF(i.EQ.0 .AND. j.EQ.0 .AND. (.NOT.use_nominal)) CYCLE
+         rgeo         = xogeo + rhat*r_rdot(i,j,1)
+         dgeo         = vsize(rgeo)
+         rdotgeo      = vogeo + r_rdot(i,j,2)*rhat + r_rdot(i,j,1)*(rhalpha*att(3) + rhdelta*att(4))
+         vgeo2        = prscal(rdotgeo,rdotgeo)
+         E_earth(i,j) = vgeo2/2 -gmearth/dgeo;
       ENDDO
    ENDDO
  END SUBROUTINE energy_earth

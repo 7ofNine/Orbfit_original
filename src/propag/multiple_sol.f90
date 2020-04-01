@@ -3434,187 +3434,175 @@ SUBROUTINE lovinterp(rindex,deltasig,el0,unc0,succ)
   ENDIF
 END SUBROUTINE lovinterp
 
-! ===================================================                    
-! LOVINTERP                                                             
-! provides an interpolated orbit along the LOV                          
-! (with non-integer index rindex)                                       
-! ===================================================   
-                 
+!====================================================!
+! LOVINTERP3                                         !
+!----------------------------------------------------!                   
+! It provides an interpolated orbit along the LOV    !
+! (with non-integer index rindex)                    !                  
+!====================================================!
 SUBROUTINE lovinterp3(rindex,sigmaout,el0,unc0,succ)
   USE obssto
   USE least_squares
   USE tp_trace, ONLY: vvv_tp
-! ====================INPUT=============================      
-  DOUBLE PRECISION, INTENT(IN) :: rindex       ! real index
-! ====================OUTPUT============================
-  DOUBLE PRECISION, INTENT(OUT) :: sigmaout     ! sigma and index values at end of step 
-  TYPE(orbit_elem), INTENT(OUT) :: el0          ! elements     
-  TYPE(orb_uncert), INTENT(OUT) :: unc0  ! normal and covariance matrices
-                                                  ! corresponding to rindex
-  LOGICAL, INTENT(OUT) :: succ                  ! success flag  
-! ==================END INTERFACE=============================
-  LOGICAL :: batch                              ! batch control
-! ================LOV INTERPOLATION===========================
-  DOUBLE PRECISION deltasig     ! change of sigma_lov corresponding to the interval beween 
-                                ! index imu and imu +1 or imu-1
-  DOUBLE PRECISION :: wdir(ndimx),units(ndimx),sdir,h0,diff(ndimx) 
-  LOGICAL :: fail, bizarre 
-!  INTEGER :: iun20 
-  DOUBLE PRECISION :: csinew,delnew,rmshnew    ! for constr_fit   
-  INTEGER :: nused 
-  TYPE(orbit_elem) :: elc                ! corrected 
-  INTEGER nd ! no. solve for parameters
-! =============LOOP INDEXES, LOV INDEXES=======================
-  INTEGER :: j,i,imu,ir 
-  DOUBLE PRECISION :: s, ecc 
-! =============================================================
-  IF(.not.prob_sampl)THEN
-     WRITE(*,*)' lovinterp3: not to be called if not prob_sampl'
+  DOUBLE PRECISION, INTENT(IN)  :: rindex   ! Real index
+  DOUBLE PRECISION, INTENT(OUT) :: sigmaout ! Sigma and index values at end of step 
+  TYPE(orbit_elem), INTENT(OUT) :: el0      ! Elements     
+  TYPE(orb_uncert), INTENT(OUT) :: unc0     ! Normal and covariance matrices corresponding to rindex
+  LOGICAL,          INTENT(OUT) :: succ     ! Success flag  
+  ! Local variables
+  LOGICAL          :: batch        ! Batch control
+  DOUBLE PRECISION :: deltasig     ! Length in sigma_lov of the interval containing the index
+  DOUBLE PRECISION :: wdir(ndimx)  ! Weak direction
+  DOUBLE PRECISION :: units(ndimx) ! Units for scaling
+  DOUBLE PRECISION :: sdir         ! Eigenvalue of the weak direction
+  DOUBLE PRECISION :: diff(ndimx)  ! Element difference over the considered interval
+  LOGICAL          :: fail         ! Failure in prop_sig
+  LOGICAL          :: bizarre      ! Bizarre flag
+  DOUBLE PRECISION :: csinew       ! Residuals norm after constr_fit
+  DOUBLE PRECISION :: delnew       ! Last corr. norm after constr fit
+  DOUBLE PRECISION :: rmshnew      ! RMS of H after constr_fit
+  INTEGER          :: nused        ! No. of observations used by constr_fit
+  TYPE(orbit_elem) :: elc          ! Corrected elements 
+  INTEGER          :: nd           ! No. solve for parameters
+  INTEGER          :: j,i          ! Indexes
+  INTEGER          :: imu          ! Nearest LOV index to rindex
+  INTEGER          :: ir           ! Nearest integer to rindex
+  DOUBLE PRECISION :: s            ! Fractional part of rindex
+  DOUBLE PRECISION :: ecc          ! Eccentricity for bizarre control
+
+  IF(.NOT.prob_sampl)THEN
+     WRITE(*,*) ' lovinterp3: it has to be called if prob_sampl is TRUE'
      STOP
   ENDIF
-! failure case ready                                                    
-  succ=.false. 
-! interpolate elements                                                  
-  ir=NINT(rindex)
-! extrapolation?                                                        
-! WARNING: will result in failure if extrapolation is by a              
-! long step beyond the end of the LOV string already computed           
-  IF(ir.lt.imim)THEN 
-     imu=imim
-  ELSEIF(ir.gt.imip)THEN 
-     imu=imip
-  ELSE 
-     imu=ir 
+  ! Initialization
+  succ = .FALSE. 
+  nd   = 6 + nls
+  ! Nearest integere to rindex
+  ir = NINT(rindex)
+  ! Compute imu, the nearest LOV index to ir
+  IF(ir.LT.imim)THEN 
+     imu = imim
+  ELSEIF(ir.GT.imip)THEN 
+     imu = imip
+  ELSE  
+     imu = ir 
   ENDIF
-! linear interpolation between the two consecutive ones                 
-  s=rindex-imu
-  IF(ABS(s).gt.1.d0)THEN
-     WRITE(*,*)'lovinterp3: extrapolation index beyond computed LOV ', ir, imim, imip
+  ! Distance (with sign) from rindex to imu
+  s = rindex-imu
+  IF(ABS(s).GT.1.d0)THEN
+     WRITE(*,*) ' lovinterp3: extrapolation index beyond computed LOV ', ir, imim, imip
      STOP
-  ENDIF 
-! non-grav parameters
-  nd=6+nls
-! WARNING: use convex combination is easier
-  IF(lin_lov.and..not.scatterplane)THEN  
-!     IF(prob_sampl)THEN
-!        WRITE(*,*)' lovinterp3: lin_lov not ready for prob_sampl'
-!        STOP
-!     ENDIF
+  ENDIF
+  ! WARNING: use convex combination is easier
+  IF(lin_lov .AND. .NOT.scatterplane)THEN  
      CALL weak_dir(unm(imu)%g(1:nd,1:nd),wdir,sdir,-1,elm(imu)%coo,elm(imu)%coord,units,nd)
-! find interpolation interval
-     IF(s.gt.0.d0)THEN
-        deltasig=sigmavalv(imu+1)-sigmavalv(imu)
-     ELSEIF(s.lt.0.d0)THEN
-        deltasig=sigmavalv(imu)-sigmavalv(imu-1)
-     ELSE
-        WRITE(*,*)' lovinterp3: dummy interpolation, rindex=', rindex
+     ! Find interpolation interval length
+     IF(s.GT.0.d0)THEN
+        deltasig = sigmavalv(imu+1)-sigmavalv(imu)
+     ELSEIF(s.LT.0.d0)THEN
+        deltasig = sigmavalv(imu)-sigmavalv(imu-1)
+     ELSE 
+        WRITE(*,*) ' lovinterp3: interpolation with integer rindex =', rindex
         STOP
      ENDIF
-! linear shift in direction wdir
-     el0=elm(imu)
-     el0%coord=elm(imu)%coord+units(1:6)*wdir(1:6)*sdir*deltasig*s
-     IF(nd.gt.6)THEN
+     ! Find interpolated orbit
+     el0       = elm(imu)
+     el0%coord = elm(imu)%coord + units(1:6)*wdir(1:6)*sdir*deltasig*s
+     IF(nd.GT.6)THEN
         DO j=1,nls
-           dyn%dp(ls(j))=dpm(ls(j),imu)+units(6+j)*wdir(6+j)*sdir*deltasig*s
+           dyn%dp(ls(j)) = dpm(ls(j),imu)+units(6+j)*wdir(6+j)*sdir*deltasig*s
         ENDDO
      ENDIF
-     unc0=unm(imu)
-     succ=.true.
-     IF(s.gt.0.d0)THEN
-        sigmaout=(1.d0-s)*sigmavalv(imu)+s*sigmavalv(imu+1)
+     unc0 = unm(imu)
+     succ = .TRUE.
+     IF(s.GT.0.d0)THEN
+        sigmaout = (1.d0-s)*sigmavalv(imu)+s*sigmavalv(imu+1)
      ELSE
-        sigmaout=(1.d0+s)*sigmavalv(imu)-s*sigmavalv(imu-1)
+        sigmaout = (1.d0+s)*sigmavalv(imu)-s*sigmavalv(imu-1)
      ENDIF
-  ELSEIF(lin_lov.and.scatterplane)THEN
-!     IF(prob_sampl)THEN
-!        WRITE(*,*)' lovinterp3: scatterplane and prob_sampl'
-!        STOP
-!     ENDIF
- ! linear shift in direction vvv
-     el0=elm(imu)
-! find interpolation interval
-     IF(s.gt.0.d0)THEN
-        deltasig=sigmavalv(imu+1)-sigmavalv(imu)
-     ELSEIF(s.lt.0.d0)THEN
-        deltasig=sigmavalv(imu)-sigmavalv(imu-1)
+  ELSEIF(lin_lov .AND. scatterplane)THEN
+     ! Find interpolation interval length
+     IF(s.GT.0.d0)THEN
+        deltasig = sigmavalv(imu+1)-sigmavalv(imu)
+     ELSEIF(s.LT.0.d0)THEN
+        deltasig = sigmavalv(imu)-sigmavalv(imu-1)
      ELSE
-        WRITE(*,*)' lovinterp3: dummy interpolation, rindex=', rindex
+        WRITE(*,*) ' lovinterp3: interpolation with integer rindex =', rindex
         STOP
      ENDIF
-     el0%coord=elm(imu)%coord+vvv_tp(1:6)*deltasig*s
- !    el0%coord=(1-s)*elm(imu)%coord+s*elm(imu+1)%coord
-     IF(nd.gt.6)THEN
+     ! Find interpolated orbit
+     el0       = elm(imu)
+     el0%coord = elm(imu)%coord+vvv_tp(1:6)*deltasig*s
+     IF(nd.GT.6)THEN
         DO j=1,nls
-           dyn%dp(ls(j))=dpm(ls(j),imu)+vvv_tp(6+j)*deltasig*s
- !          dyn%dp(ls(j))=(1-s)*dpm(ls(j),imu)+s*dpm(ls(j),imu+1)
+           dyn%dp(ls(j)) = dpm(ls(j),imu)+vvv_tp(6+j)*deltasig*s
         ENDDO
      ENDIF
-     unc0=unm(imu)
-     succ=.true.
-     IF(s.gt.0.d0)THEN
-        sigmaout=(1.d0-s)*sigmavalv(imu)+s*sigmavalv(imu+1)
+     unc0 = unm(imu)
+     succ = .TRUE.
+     IF(s.GT.0.d0)THEN
+        sigmaout = (1.d0-s)*sigmavalv(imu)+s*sigmavalv(imu+1)
      ELSE
-        sigmaout=(1.d0+s)*sigmavalv(imu)-s*sigmavalv(imu-1)
+        sigmaout = (1.d0+s)*sigmavalv(imu)-s*sigmavalv(imu-1)
      ENDIF
-  ELSEIF(.not.lin_lov)THEN
+  ELSEIF(.NOT.lin_lov)THEN
      CALL weak_dir(unm(imu)%g(1:nd,1:nd),wdir,sdir,-1,elm(imu)%coo,elm(imu)%coord,units,nd) 
-! anti reversal check
-     IF(imu.lt.imip)THEN
-        diff(1:6)=elm(imu+1)%coord-elm(imu)%coord
+     ! Anti-reversal check
+     IF(imu.LT.imip)THEN
+        diff(1:6) = elm(imu+1)%coord-elm(imu)%coord
         DO j=7,nd
-           diff(j)=dpm(ls(j-6),imu+1)-dpm(ls(j-6),imu)
+           diff(j) = dpm(ls(j-6),imu+1)-dpm(ls(j-6),imu)
         ENDDO
      ELSE
-        diff(1:6)=elm(imu)%coord-elm(imu-1)%coord
+        diff(1:6) = elm(imu)%coord-elm(imu-1)%coord
         DO j=7,nd
-           diff(j)=dpm(ls(j-6),imu)-dpm(ls(j-6),imu-1)
+           diff(j) = dpm(ls(j-6),imu)-dpm(ls(j-6),imu-1)
         ENDDO
      ENDIF
      DO j=1,nls
-        dyn%dp(ls(j))=dpm(ls(j),imu)
+        dyn%dp(ls(j)) = dpm(ls(j),imu)
      END DO
-     IF(DOT_PRODUCT(diff(1:nd),wdir(1:nd)).lt.0.d0)wdir(1:nd)=-wdir(1:nd)
-! find interpolation interval
-     IF(s.gt.0.d0)THEN
-        deltasig=sigmavalv(imu+1)-sigmavalv(imu)
-     ELSEIF(s.lt.0.d0)THEN
-        deltasig=sigmavalv(imu)-sigmavalv(imu-1)
+     IF(DOT_PRODUCT(diff(1:nd),wdir(1:nd)).LT.0.d0) wdir(1:nd) = -wdir(1:nd)
+     ! Find interpolation interval
+     IF(s.GT.0.d0)THEN
+        deltasig = sigmavalv(imu+1)-sigmavalv(imu)
+     ELSEIF(s.LT.0.d0)THEN
+        deltasig = sigmavalv(imu)-sigmavalv(imu-1)
      ELSE
-        WRITE(*,*)' lovinterp3: dummy interpolation, rindex=', rindex
+        WRITE(*,*) ' lovinterp3: interpolation with integer rindex =', rindex
         STOP
      ENDIF
-! nonlinear interpolation   
+     ! Non-linear interpolation   
      CALL prop_sig(batch,elm(imu),el0,s,deltasig,m_m,obs_m,obsw_m,wdir,sdir,units,fail,nd)
-! check for hyperbolic                                                  
      IF(fail)THEN 
-        WRITE(*,*)'step ',rindex,' hyperbolic' 
-        WRITE(*,*)el0%coo,el0%coord 
+        WRITE(*,*) ' lovinterp3: called at index ',rindex,', and get a hyperbolic orbit' 
+        WRITE(*,*) el0%coo,el0%coord 
         RETURN 
      ELSEIF(bizarre(el0,ecc))THEN 
-        WRITE(*,*)'step ',rindex,' byzarre' 
+        WRITE(*,*) ' lovinterp3: called at index ',rindex,' and get a bizarre orbit' 
         WRITE(*,*) el0%coo,el0%coord, ecc
         RETURN 
      ENDIF
-! constrained corrections: 
+     ! Constrained corrections
      CALL constr_fit(m_m,obs_m,obsw_m,el0,wdir,elc,unc0,csinew,delnew,rmshnew,nused,succ,nd)
-! exit if not convergent                                                
-     IF(.not.succ) THEN 
-        WRITE(*,*)'lovinterp3: constr_fit failed for ',rindex 
+     IF(.NOT.succ) THEN 
+        WRITE(*,*) ' lovinterp3: constr_fit failed for index = ', rindex 
         RETURN 
      ELSE
-        el0=elc 
-        succ=.true. 
-        IF(s.gt.0.d0)THEN
-           sigmaout=(1.d0-s)*sigmavalv(imu)+s*sigmavalv(imu+1)
+        el0  = elc 
+        succ = .TRUE. 
+        IF(s.GT.0.d0)THEN
+           sigmaout = (1.d0-s)*sigmavalv(imu)+s*sigmavalv(imu+1)
         ELSE
-           sigmaout=(1.d0+s)*sigmavalv(imu)-s*sigmavalv(imu-1)
+           sigmaout = (1.d0+s)*sigmavalv(imu)-s*sigmavalv(imu-1)
         ENDIF
      ENDIF
   ELSE
-     WRITE(*,*)'lovinterp: case not yet invented'
+     WRITE(*,*) ' lovinterp3: case not yet invented'
      STOP
   ENDIF
 END SUBROUTINE lovinterp3
+
 ! ====================================================                  
 ! LOVOBS                                                                
 ! ====================================================                  

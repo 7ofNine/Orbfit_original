@@ -1081,3 +1081,44 @@ SUBROUTINE calendwri(tcl,calend)
   write(calend,'(i4,a1,i2.2,a1,i2.2,f4.3)')                         &
      &     iyear,'/',imonth,'/',iday,h24                                
 END SUBROUTINE calendwri
+
+
+SUBROUTINE convert_mjd_cal(t_mjd,t_str)
+  !=============================================================================
+  DOUBLE PRECISION,  INTENT(IN)  :: t_mjd  ! Time in MJD
+  CHARACTER(LEN=16), INTENT(OUT) :: t_str  ! Time in the format YYYY/MM/DD HH:SS
+  !=============================================================================
+  CHARACTER(LEN=14)  :: t_aux
+  INTEGER            :: year, month 
+  DOUBLE PRECISION   :: day
+  INTEGER            :: day_int, hour, minute                               
+  CHARACTER(LEN=2)   :: month_ch,day_ch,hour_ch,minute_ch 
+  !=============================================================================
+  CALL calendwri(t_mjd,t_aux)
+  READ(t_aux(1:14),'(I4,1X,I2,1X,F6.3)') year,month,day
+  day_int = FLOOR(day)
+  hour    = FLOOR((day-day_int)*24d0)
+  minute  = NINT(((day-day_int)*24d0-hour)*60d0)
+  IF(month.LT.10)THEN 
+     WRITE(month_ch,'(A1,I1)') '0', month
+  ELSE
+     WRITE(month_ch,'(I2)') month
+  ENDIF
+  IF(day_int.LT.10)THEN 
+     WRITE(day_ch,'(A1,I1)') '0',day_int
+  ELSE
+     WRITE(day_ch,'(I2)') day_int
+  ENDIF
+  IF(hour.LT.10)THEN 
+     WRITE(hour_ch,'(A1,I1)') '0',hour
+  ELSE
+     WRITE(hour_ch,'(I2)') hour
+  ENDIF
+  IF(minute.lt.10)THEN 
+     WRITE(minute_ch,'(A1,I1)') '0',minute
+  ELSE
+     WRITE(minute_ch,'(I2)') minute
+  ENDIF
+  WRITE(t_str,'(I4,2(A1,A2),1X,A2,A1,A2)') year,'/',month_ch,'/',day_ch,hour_ch,':',minute_ch
+
+END SUBROUTINE convert_mjd_cal

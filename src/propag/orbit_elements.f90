@@ -4418,40 +4418,48 @@ SUBROUTINE wro1lr(unit,name,elem,eltype,t0,h,g,ngr_act)
   ENDIF                                                                      
 END SUBROUTINE wro1lr
 
+!====================================================================!
+! WRO1LR_MATLAB                                                      !
+!====================================================================!
+! It writes the files with orbital elements for MATLAB (1L)          !
+!====================================================================!
 SUBROUTINE wro1lr_matlab(unit,name,elem,eltype,t0,h,ngr_act,chi,rms,succ) 
   USE fund_const
   IMPLICIT NONE
-! Begin interface
-  INTEGER,           INTENT(IN)           :: unit 
-  DOUBLE PRECISION,  INTENT(IN)           :: elem(6),t0,h
-  CHARACTER*(*),     INTENT(IN)           :: name,eltype 
-  INTEGER,           INTENT(IN), OPTIONAL :: ngr_act
-  DOUBLE PRECISION,  INTENT(IN), OPTIONAL :: chi
-  DOUBLE PRECISION,  INTENT(IN), OPTIONAL :: rms
-  INTEGER,           INTENT(IN), OPTIONAL :: succ
-! End interface
-! Expected max length of name                                           
-  INTEGER, PARAMETER :: namtl=12 
-  DOUBLE PRECISION   :: cnvele(6), princ                                         
+  !=======================================================================================================
+  INTEGER,           INTENT(IN)           :: unit     ! File unit
+  CHARACTER*(*),     INTENT(IN)           :: name     ! Name of the object
+  DOUBLE PRECISION,  INTENT(IN)           :: elem(6)  ! Orbital elements
+  CHARACTER*(*),     INTENT(IN)           :: eltype   ! Coordinate of the orbital elements
+  DOUBLE PRECISION,  INTENT(IN)           :: t0       ! Time of the orbital elements
+  DOUBLE PRECISION,  INTENT(IN)           :: h        ! Absolute magnitude
+  INTEGER,           INTENT(IN), OPTIONAL :: ngr_act  ! Non grav. paramerters activated
+  DOUBLE PRECISION,  INTENT(IN), OPTIONAL :: chi      ! Chi value
+  DOUBLE PRECISION,  INTENT(IN), OPTIONAL :: rms      ! RMS value
+  INTEGER,           INTENT(IN), OPTIONAL :: succ     ! Succ flag for the AR connected components
+  !=======================================================================================================
+  INTEGER, PARAMETER :: namtl=12  ! Expected max length of name
+  DOUBLE PRECISION   :: cnvele(6) ! Elements to be written
+  DOUBLE PRECISION   :: sma       ! Semi-major axis, for COM write
+  DOUBLE PRECISION   :: princ     ! Function for the principal part of an angle            
   INTEGER            :: ln,nb,i 
   CHARACTER*(namtl)  :: blanks
-  INTEGER            :: lench 
-  EXTERNAL lench 
   CHARACTER*80       :: elefmt 
   INTEGER            :: ngr_act_loc
   DOUBLE PRECISION   :: chi_loc
   DOUBLE PRECISION   :: rms_loc
   INTEGER            :: succ_loc
-!============================================================
-! Name                                                                  
-  ln=MAX(1,lench(name)) 
-  nb=MAX(1,namtl-ln) 
-  blanks=' ' 
-! Check if there are non-grav parameters
+  INTEGER            :: lench 
+  EXTERNAL lench 
+  !=======================================================================================================
+  ln = MAX(1,lench(name)) 
+  nb = MAX(1,namtl-ln) 
+  blanks = ' ' 
+  ! Fill the optional variables
   IF(PRESENT(ngr_act))THEN
-     ngr_act_loc=ngr_act
+     ngr_act_loc = ngr_act
   ELSE
-     ngr_act_loc=0
+     ngr_act_loc = 0
   END IF
   IF(PRESENT(chi))THEN
      chi_loc = chi
@@ -4466,71 +4474,55 @@ SUBROUTINE wro1lr_matlab(unit,name,elem,eltype,t0,h,ngr_act,chi,rms,succ)
   IF(PRESENT(succ))THEN
      succ_loc = succ
   END IF
-! Convert to degrees 
-  cnvele=elem 
-  IF(eltype .eq. 'CAR')THEN 
-     elefmt='(A,A,1x,F13.6,'//                    &
-     &        '6(1x,F17.13),'//                                     &
-     &        '2F6.2,1X,I2,1P,1X,D12.5,1X,D12.5)'                                                  
-  ELSEIF(eltype .eq. 'KEP')THEN 
-     cnvele(3:6)=cnvele(3:6)*degrad
+  ! Convert radians to degrees and inizialization of the format
+  cnvele = elem 
+  IF(eltype.EQ.'CAR')THEN 
+     elefmt = '(A,A,F13.6,1P,6(F17.13),0P,F6.2,1X,I2,1P,1X,D12.5,1X,D12.5)'                                                  
+  ELSEIF(eltype.EQ.'KEP')THEN 
+     cnvele(3:6) = cnvele(3:6)*degrad
      IF(PRESENT(succ)) THEN
-        elefmt='(A,A,F13.6,'//                       &
-             &        '1p,6(e25.16),'//                                     &
-             &        '0p,F6.2,1X,I2,1P,1X,D12.5,1X,D12.5,1X,I1)'
+        elefmt = '(A,A,F13.6,1P,6(E25.16),0P,F6.2,1X,I2,1P,1X,D12.5,1X,D12.5,1X,I1)'
      ELSE
-        elefmt='(A,A,F13.6,'//                       &
-             &        '1p,6(e25.16),'//                                     &
-             &        '0p,F6.2,1X,I2,1P,1X,D12.5,1X,D12.5)'
+        elefmt = '(A,A,F13.6,1P,6(E25.16),0P,F6.2,1X,I2,1P,1X,D12.5,1X,D12.5)'
      END IF
-!        elefmt='('''''''',A,'''''''',A,F13.6,'//                       
-!    +        'F16.12,1x,F12.10,4(1x,F12.7),'//                         
-!    +        '2F6.2)' 
-  ELSEIF(eltype .eq. 'COM')THEN 
-     cnvele(3:5)=cnvele(3:5)*degrad 
+  ELSEIF(eltype.EQ.'COM')THEN 
+     cnvele(3:5) = cnvele(3:5)*degrad 
+     ! In this case write also the semi-major axis
+     sma = cnvele(1)/(1-cnvele(2))
      IF(PRESENT(succ))THEN
-        elefmt='(A,A,F13.6,'//                       &
-             &        '1p,5(e25.16),0p,f14.6,'//                            &
-             &        '0p,F6.2,1X,I2,1P,1X,D12.5,1X,D12.5,1X,I1)'
+        elefmt = '(A,A,F13.6,1P,6(E25.16),0P,F14.6,0P,F6.2,2X,I2,1P,2X,D12.5,1X,D12.5,5X,I1)'
      ELSE
-        elefmt='(A,A,F13.6,'//                       &
-             &        '1p,5(e25.16),0p,f14.6,'//                            &
-             &        '0p,F6.2,1X,I2,1P,1X,D12.5,1X,D12.5,1X,I1)'
+        elefmt = '(A,A,F13.6,1P,6(E25.16),0P,F14.6,0P,F6.2,1X,I2,1P,1X,D12.5,1X,D12.5)'
      END IF
-  ELSEIF(eltype .eq. 'COT')THEN 
-     cnvele(3:6)=cnvele(3:6)*degrad 
-     elefmt='(A,A,F13.6,'//                       &
-     &        '1p,6(e25.16),0p,2F6.2,1X,I2,1P,1X,D12.5,1X,D12.5)'
-  ELSEIF(eltype .eq. 'EQU')THEN 
-     cnvele(6)=princ(cnvele(6))
-     cnvele(6)=cnvele(6)*degrad 
-     elefmt='(A,A,F13.6,'//                       &
-     &        'F16.12,4(1x,f12.9),1x,F12.7,'//                      &
-     &        '2F6.2,1X,I2,1P,1X,D12.5,1X,D12.5)'                                                  
-  ELSEIF(eltype.eq.'ATT')THEN
-     WRITE(*,*)' wro1lr: warning, the ATT elelments in  this format have no station code '
-     cnvele(1:4)=cnvele(1:4)*degrad
-     elefmt='(A,A,F13.6,'//                       &
-     &        '1p,6(e25.16),'//                                     &
-     &        '0p,2F6.2,1X,I,1P,1X,D12.52,1X,D12.5)'  
+  ELSEIF(eltype.EQ.'COT')THEN 
+     cnvele(3:6) = cnvele(3:6)*degrad 
+     elefmt = '(A,A,F13.6,1P,6(E25.16),0P,F6.2,1X,I2,1P,1X,D12.5,1X,D12.5,1X,I1)'
+  ELSEIF(eltype.EQ.'EQU')THEN 
+     cnvele(6) = princ(cnvele(6))
+     cnvele(6) = cnvele(6)*degrad 
+     elefmt = '(A,A,F13.6,F16.12,4(1X,F12.9),1X,F12.7,F6.2,1X,I2,1P,1X,D12.5,1X,D12.5)'                                                  
+  ELSEIF(eltype.EQ.'ATT')THEN
+     WRITE(*,*)' wro1lr_matlab: WARNING! The ATT elements in this format have no station code '
+     cnvele(1:4) = cnvele(1:4)*degrad
+     elefmt = '(A,A,F13.6,1P,6(E25.16),0P,F6.2,1X,I,1P,1X,D12.52,1X,D12.5)'  
   ELSE 
-     WRITE(*,*)'*** wro1lr_matlab: unsupported coordinate type', eltype
-     STOP '*** wro1lr_matlab: unsupported coordinate type' 
+     WRITE(*,*) 'wro1lr_matlab: ERROR! Unsupported coordinate type ', eltype
+     STOP
   ENDIF
-! Write                                                                 
-  IF(h.GT.-100.d0) THEN
-     IF(PRESENT(succ))THEN 
+  ! Write the orbital elements
+  IF(PRESENT(succ))THEN 
+     IF(eltype.EQ.'COM')THEN
+        WRITE(unit,elefmt) name(1:ln),blanks(1:nb),t0,sma,cnvele,h,ngr_act_loc, chi_loc, rms_loc, succ_loc
+     ELSE
         WRITE(unit,elefmt) name(1:ln),blanks(1:nb),t0,cnvele,h,ngr_act_loc, chi_loc, rms_loc, succ_loc
+     END IF
+  ELSE
+     IF(eltype.EQ.'COM')THEN
+        WRITE(unit,elefmt) name(1:ln),blanks(1:nb),t0,sma,cnvele,h,ngr_act_loc, chi_loc, rms_loc
      ELSE
         WRITE(unit,elefmt) name(1:ln),blanks(1:nb),t0,cnvele,h,ngr_act_loc, chi_loc, rms_loc
      END IF
-  ELSE 
-     IF(PRESENT(succ))THEN
-        WRITE(unit,elefmt) name(1:ln),blanks(1:nb),t0,cnvele,ngr_act_loc, chi_loc, rms_loc, succ_loc
-     ELSE
-        WRITE(unit,elefmt) name(1:ln),blanks(1:nb),t0,cnvele,ngr_act_loc, chi_loc, rms_loc
-     END IF
-  ENDIF                                                                      
+  END IF
 END SUBROUTINE wro1lr_matlab
 
 !  *****************************************************************    

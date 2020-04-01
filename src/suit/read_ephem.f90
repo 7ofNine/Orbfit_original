@@ -534,11 +534,12 @@ SUBROUTINE sunmoon_car(t0,equ,xsun,xmoon)
 ! SUNMOON_CAR - get geocentric cartesian coordinates
 ! for Sun and Moon, equatorial (equ=TRUE) or ecpliptic (equ=FALSE) 
 ! input: epoch time 
-  DOUBLE PRECISION, INTENT(IN) :: t0
+  DOUBLE PRECISION, INTENT(IN)                          :: t0
 ! equatorial or ecliptic
-  LOGICAL, INTENT(IN) :: equ 
+  LOGICAL, INTENT(IN)                                   :: equ 
 ! output: geocentric state vector of Sun and Moon (ecliptic)      
-  DOUBLE PRECISION, DIMENSION(6), INTENT(OUT) :: xsun, xmoon 
+  DOUBLE PRECISION, DIMENSION(6), INTENT(OUT)           :: xsun
+  DOUBLE PRECISION, DIMENSION(6), INTENT(OUT), OPTIONAL :: xmoon 
 ! =============JPL EPHEM===============                                 
 ! data for masses                                                       
   INCLUDE 'jplhdr.h90' 
@@ -561,14 +562,16 @@ SUBROUTINE sunmoon_car(t0,equ,xsun,xmoon)
 ! Change of reference system EQUM00 ---> ECLM00                         
      xsun(1:3)=MATMUL(roteqec,rrd(1:3)) 
      xsun(4:6)=MATMUL(roteqec,rrd(4:6))
-  ENDIF 
-  ntarg=10
-  CALL dpleph(et,ntarg,ncent,rrd,istate)
-  IF(equ)THEN
-     xmoon=rrd
-  ELSE   
-! Change of reference system EQUM00 ---> ECLM00                         
-     xmoon(1:3)=MATMUL(roteqec,rrd(1:3)) 
-     xmoon(4:6)=MATMUL(roteqec,rrd(4:6)) 
+  ENDIF
+  IF(PRESENT(xmoon))THEN
+    ntarg=10
+    CALL dpleph(et,ntarg,ncent,rrd,istate)
+    IF(equ)THEN
+       xmoon=rrd
+    ELSE   
+    ! Change of reference system EQUM00 ---> ECLM00                         
+       xmoon(1:3)=MATMUL(roteqec,rrd(1:3)) 
+       xmoon(4:6)=MATMUL(roteqec,rrd(4:6)) 
+    ENDIF
   ENDIF
 END SUBROUTINE sunmoon_car

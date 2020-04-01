@@ -1,3 +1,9 @@
 *.o
 *.a
 *.x
+.metadata/*
+*.mod
+/bin/*
+/EWS/*
+/junit-workspace/*
+/lib/jpleph

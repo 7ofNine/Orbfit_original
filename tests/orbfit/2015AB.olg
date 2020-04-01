@@ -1,0 +1,55 @@
+Input of observations:
+ input_obs:           37  obs from mpcobs/2015AB.rwo
+ input_obs:          37  from mpcobs/2015AB.obs
+       37 observations read for object 2015AB
+Preliminary orbit for object 2015AB:
+    Trying observations:    24    26    34 (DT=     20.77     14.73 d)
+    RMS check observations:     1 -    37 (DT=   1981.03 d)
+        Gauss(2015AB): NR=3 NC=1 NK=1 (OK)
+            Gauss(2015AB#1): a=   1.8015 e=   0.2835 RMS=  1.18E+03 arcsec
+        Vaisala(2015AB): NR=1 NC=1 NK=1
+            Vaisala(2015AB#1): a=   1.8017 e=   0.2836 RMS=  5.71E+02 arcsec
+        Gauss(2015AB): NR=3 NC=1 NK=1 (OK)
+            Gauss(2015AB#1): a=   1.8015 e=   0.2835 RMS=  1.50E+03 arcsec
+        Vaisala(2015AB): NR=1 NC=1 NK=1
+            Vaisala(2015AB#1): a=   1.8016 e=   0.2836 RMS=  8.87E+02 arcsec
+        Gauss(2015AB): NR=3 NC=1 NK=1 (OK)
+            Gauss(2015AB#1): a=   1.8013 e=   0.2835 RMS=  2.40E+03 arcsec
+        Vaisala(2015AB): NR=1 NC=1 NK=1
+            Vaisala(2015AB#1): a=   1.8014 e=   0.2836 RMS=  1.79E+03 arcsec
+        Gauss(2015AB): NR=3 NC=1 NK=1 (OK)
+            Gauss(2015AB#1): a=   1.8012 e=   0.2835 RMS=  2.55E+03 arcsec
+        Vaisala(2015AB): NR=1 NC=1 NK=1
+            Vaisala(2015AB#1): a=   1.8014 e=   0.2836 RMS=  1.94E+03 arcsec
+        Gauss(2015AB): NR=3 NC=1 NK=1 (OK)
+            Gauss(2015AB#1): a=   1.8015 e=   0.2835 RMS=  1.03E+03 arcsec
+        Vaisala(2015AB): NR=1 NC=1 NK=1
+            Vaisala(2015AB#1): a=   1.8017 e=   0.2836 RMS=  4.22E+02 arcsec
+        Gauss(2015AB): NR=3 NC=1 NK=1 (OK)
+            Gauss(2015AB#1): a=   1.8017 e=   0.2836 RMS=  1.93E+02 arcsec
+        Vaisala(2015AB): NR=1 NC=1 NK=1
+            Vaisala(2015AB#1): a=   1.8019 e=   0.2836 RMS=  4.36E+02 arcsec
+        Gauss(2015AB): NR=3 NC=1 NK=1 (OK)
+            Gauss(2015AB#1): a=   1.8020 e=   0.2836 RMS=  1.19E+03 arcsec
+        Vaisala(2015AB): NR=1 NC=1 NK=1
+            Vaisala(2015AB#1): a=   1.8021 e=   0.2837 RMS=  1.81E+03 arcsec
+        Gauss(2015AB): NR=3 NC=1 NK=1 (OK)
+            Gauss(2015AB#1): a=   1.8016 e=   0.2835 RMS=  7.89E+02 arcsec
+        Vaisala(2015AB): NR=1 NC=1 NK=1
+            Vaisala(2015AB#1): a=   1.8017 e=   0.2836 RMS=  1.77E+02 arcsec
+        Gauss(2015AB): NR=3 NC=1 NK=1 (OK)
+            Gauss(2015AB#1): a=   1.8015 e=   0.2835 RMS=  1.40E+03 arcsec
+        Vaisala(2015AB): NR=1 NC=1 NK=1
+            Vaisala(2015AB#1): a=   1.8016 e=   0.2836 RMS=  7.86E+02 arcsec
+        Gauss(2015AB): NR=3 NC=1 NK=1 (OK)
+            Gauss(2015AB#1): a=   1.8020 e=   0.2836 RMS=  1.17E+03 arcsec
+        Vaisala(2015AB): NR=1 NC=1 NK=1
+            Vaisala(2015AB#1): a=   1.8021 e=   0.2837 RMS=  1.79E+03 arcsec
+        Gauss(2015AB): NR=3 NC=1 NK=1 (OK)
+            Gauss(2015AB#1): a=   1.8015 e=   0.2835 RMS=  1.47E+03 arcsec
+        Vaisala(2015AB): NR=1 NC=1 NK=1
+            Vaisala(2015AB#1): a=   1.8016 e=   0.2836 RMS=  8.59E+02 arcsec
+    IOD(2015AB) STAT:     1    11    33    11    11    11    11
+    IOD(2015AB): FAILED
+Differential correction for object 2015AB:
+     Starting orbital elements:

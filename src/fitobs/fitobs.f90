@@ -100,7 +100,6 @@ PROGRAM fitobs
 ! ===============attributables ===================
   TYPE(attrib) attr0,attrp,attr,attrc !attributables
   DOUBLE PRECISION trou ! rounded time (at the integer MJD)
-  LOGICAL conditional ! else marginal, probability on MOV
   DOUBLE PRECISION, PARAMETER :: sphx=2.d0 ! max arc span in degrees
   INTEGER iatt ! attributable menu selection
   LOGICAL error ! only 1 obs and so on
@@ -1514,14 +1513,13 @@ PROGRAM fitobs
         CALL filclo(iunpol,' ')
 ! END WARNING
      ELSEIF(iatt.eq.4)THEN
-        conditional=.true.
 !  ndir=50;np=50;sigx=5.d0; hmax=34.5d0 defaults assigned in finopt.f90
-        CALL sample_web_grid(astnac,ini0,cov0,conditional,elc,uncc,     &
+        CALL sample_web_grid(astnac,ini0,cov0,elc,uncc,     &
              &       csino0,m,obs(1:m),obsw(1:m),nd,artyp,geoc_chi,acce_chi,chi)
      ELSEIF(iatt.eq.5)THEN
         CALL tee(iun_log,'SEARCH FOR IMMEDIATE IMPACTORS=')
-        IF(.not.cobflag)THEN
-           WRITE(*,*)' Create cobweb first'
+        IF(.NOT.mov_flag)THEN
+           WRITE(*,*) ' Compute the MOV first!'
            GOTO 59
         ENDIF
 ! select final time
@@ -1565,7 +1563,7 @@ PROGRAM fitobs
               ENDIF
            ENDDO
         ENDDO
-        el0=elcob(imin,jmin)
+        el0=el_mov(imin,jmin)
         ini0=.true.
         WRITE(*,*)el0%coord(5:6), rmsmin
      ELSE

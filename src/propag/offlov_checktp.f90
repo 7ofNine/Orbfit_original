@@ -500,18 +500,18 @@ SUBROUTINE riskchecktp(va_tracemin,t0,type,no_risk,   &
            WRITE(iunesarisk,50) impactdate,p_imp1,ps,ts, v_imp
 50         FORMAT(a17,2X,1p,e9.2,4X,0p,f6.2,5X,I2,6X,f7.2)
         END IF
-        IF(width.ge.1.0d4)THEN 
-           IF(iunrisk1.lt.0)WRITE(*,200)calend,tcl,sigma,sigimp,dcur,          &
-     &              width,stretch,p_imp1,e_tilde,ps
-           WRITE(iunrisk0,200)calend,tcl,sigma,sigimp,dcur,          &
-     &              width,stretch,p_imp1,e_tilde,ps                     
+        IF(va_tracenew%width.ge.1.0d4)THEN 
+           IF(iunrisk1.lt.0)WRITE(*,200)calend,tcl,sigma,sigimp,va_tracenew%b,          &
+     &              va_tracenew%width,stretch,p_imp1,e_tilde,ps
+           WRITE(iunrisk0,200)calend,tcl,sigma,sigimp,va_tracenew%b,          &
+     &              va_tracenew%width,stretch,p_imp1,e_tilde,ps                     
 200        FORMAT(a14,1x,f10.3,1x,f7.3,1x,f5.3,1x,f7.2,' +/- ',      &
      &              f8.2,1x,1p,e9.2,1x,e9.2,1x,e9.2,1x,0p,f6.2)         
         ELSE
-           IF(iunrisk1.lt.0)WRITE(*,100)calend,tcl,sigma,sigimp,dcur,          &
-     &              width,stretch,p_imp1,e_tilde,ps
-           WRITE(iunrisk0,100)calend,tcl,sigma,sigimp,dcur,          &
-     &              width,stretch,p_imp1,e_tilde,ps                     
+           IF(iunrisk1.lt.0)WRITE(*,100)calend,tcl,sigma,sigimp,va_tracenew%b,          &
+     &              va_tracenew%width,stretch,p_imp1,e_tilde,ps
+           WRITE(iunrisk0,100)calend,tcl,sigma,sigimp,va_tracenew%b,          &
+     &              va_tracenew%width,stretch,p_imp1,e_tilde,ps                     
 100        FORMAT(a14,1x,f10.3,1x,f7.3,1x,f5.3,1x,f7.2,' +/- ',      &
      &              f8.3,1x,1p,e9.2,1x,e9.2,1x,e9.2,1x,0p,f6.2)         
         ENDIF

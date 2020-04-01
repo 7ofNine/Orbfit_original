@@ -8,7 +8,7 @@
         integer i,l 
 ! open files with proper elements                                       
         open(6,file='numb.syn',status='old') 
-        open(7,file='secres0.syn',status='old') 
+        open(7,file='secres.syn',status='old') 
         open(8,file='numb_res.syn',status='unknown') 
 ! copy the header of numb.syn                                           
         do i=1,2 
@@ -41,7 +41,7 @@
                                                                         
 ! open files with standard deviations of proper elements                
         open(6,file='numb.sig',status='old') 
-        open(7,file='secres0.sig',status='old') 
+        open(7,file='secres.sig',status='old') 
         open(8,file='numb_res.sig',status='unknown') 
 ! copy the header of numb.sig                                           
         do i=1,2 

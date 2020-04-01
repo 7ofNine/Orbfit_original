@@ -41,11 +41,14 @@ CONTAINS
 ! SEC_NONG9   added by AM 9/9/2009
 ! secular perturbation on semimajor axis, presumably due to
 ! non gravitational perturbations (including Yarkovsky)
-! implemented as acceleration along the heliocentric velocity
-SUBROUTINE sec_nong9(xb,vb,s,sv,secacc)
+! implemented as acceleration along the transverse direction
+! 22/3/2018 added radial component 
+SUBROUTINE sec_nong9(xb,vb,s,sv,secacc,iyark,dadt)
 !  interface: INPUT
   DOUBLE PRECISION, INTENT(IN), DIMENSION(3) :: xb,vb ! position and velocity, barycentric
   DOUBLE PRECISION, INTENT(IN), DIMENSION(3) :: s,sv !  position and velocity of the sun, barycentric
+  INTEGER,INTENT(IN) :: iyark ! 3= A2 only; 4=A2 and A1
+  DOUBLE PRECISION, INTENT(IN) :: dadt ! in au/My
 !  interface: OUTPUT
   DOUBLE PRECISION, INTENT(OUT), DIMENSION(3) :: secacc
 ! end interface
@@ -74,7 +77,10 @@ SUBROUTINE sec_nong9(xb,vb,s,sv,secacc)
   yark_acc=0.5*factor/conv/rr2
   trans=v-(x*rv/rr2)
   trans_size=vsize(trans)
-  secacc=yark_acc*trans/trans_size
+  secacc=dadt*yark_acc*trans/trans_size
+  IF(iyark.eq.4)THEN
+     secacc=secacc+(30.d0*yark_acc*abs(dadt)/rr)*x
+  ENDIF
 END SUBROUTINE sec_nong9
 ! =========================================================
 ! SECULAR_NONGRAV   added 17/9/2008

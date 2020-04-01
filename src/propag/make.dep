@@ -35,7 +35,6 @@ cobweb.o: \
 	../suit/fund_const.mod \
 	../suit/name_rules.mod \
 	../suit/output_control.mod \
-	../suit/planet_masses.mod \
 	../suit/station_coordinates.mod \
 	../suit/triangles.mod \
 	arc_control.o \

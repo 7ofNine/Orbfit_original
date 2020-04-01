@@ -566,7 +566,7 @@ SUBROUTINE strclo(iplam0,tcur,xpla,xa,va,nv,jc,r,rdot,            &
      write(date,'(i4,a1,i2.2,a1,i2.2,f6.5)') iyear,'/',imonth,'/',iday,hour/24d0
      WRITE(*,97)planam(1:lpla),date,tcur2,r2 
      WRITE(iun,97)planam(1:lpla),date,tcur2,r2 
-97   FORMAT(' Close approach to ',a,' on ',a16,f12.5,' MJD at ',f10.8,' AU.')
+97   FORMAT(' Close approach to ',a,' on ',a16,f12.5,' MJD at ',f10.8,' au')
   ENDIF
   IF(nv.eq.3)THEN 
 ! nothing to do

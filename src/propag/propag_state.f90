@@ -1138,6 +1138,7 @@ SUBROUTINE propin(nfl,y1,t1,t2,y2,h,nvar,nd,dxp0dep0)
      y2(1:nvar)=y1(1:nvar) 
      RETURN 
   ENDIF
+! Radau 15
   if(icmet.eq.3)then 
 !  everhart method (propagates to exact time):      
      if(velo_req)then 
@@ -1145,6 +1146,8 @@ SUBROUTINE propin(nfl,y1,t1,t2,y2,h,nvar,nd,dxp0dep0)
      else 
         nclass=-2 
      endif
+! This IF separates the case of OrbFit, call from propag_state.mod, from
+! The one of orbit9, call fromn orbit9.f90 and similar
      IF(PRESENT(dxp0dep0))THEN
 ! accumulate state transition matrix (for initial conditions, but also
 ! for dynamical parameters if any)
@@ -1154,7 +1157,7 @@ SUBROUTINE propin(nfl,y1,t1,t2,y2,h,nvar,nd,dxp0dep0)
         ENDIF
      ENDIF
 666  CONTINUE 
-     call ra15(y1,y1(nvar2+1),t1,t2,tcur,nvar2,nclass,idc) 
+     CALL ra15(y1,y1(nvar2+1),t1,t2,tcur,nvar2,nclass,idc) 
      IF(tcur.eq.t2)THEN 
 !  current time and state is the final one;         
         IF(PRESENT(dxp0dep0))THEN
@@ -1170,13 +1173,18 @@ SUBROUTINE propin(nfl,y1,t1,t2,y2,h,nvar,nd,dxp0dep0)
                     stmout(1:6,j)=MATMUL(stm(1:6,1:6),stm0(1:6,j))+stm(1:6,j)
                  ENDDO
               ENDIF
+! if the end is at the required time, but a close approach to Earth is still
+! going on, the output mtp/tp trace must be available anyway: str_clan shall decide
+              IF(min_dist) CALL str_clan(stm0,nd,dxp0dep0)
+!
 ! the partials with respect to the dyn.parameters
-! are renormalized; they are left as they are
+! are already renormalized; they are left as they are
               CALL varunw(stmout,y1,y1(nvar2+1),nd,nvar2) 
            ENDIF
         ENDIF
         y2(1:nvar)=y1(1:nvar) 
         t1=t2 
+! the propagation with Radau15 is terminated
         RETURN
      ELSE 
 ! write message      
@@ -1201,8 +1209,7 @@ SUBROUTINE propin(nfl,y1,t1,t2,y2,h,nvar,nd,dxp0dep0)
               stm0=stmout
               CALL invaxv(y1,y1(nvar2+1),nvar2)
            ELSE
-! setup the close approach record without derivatives
-!          WRITE(*,*)' calling str_clan, t=', tcur
+              ! setup the close approach record without derivatives
               IF(min_dist) CALL str_clan(stm0,nd,dxp0dep0)
            ENDIF
            IF(kill_propag)THEN
@@ -2018,11 +2025,11 @@ SUBROUTINE zed(e,m,f,eps,i,igr)
   f=1.d6 
 END SUBROUTINE zed   
 !********************************************************************** 
-!  {\bf bessel}  ORB8V           
+!  {\bf bessel_jn}  ORB8V           
 ! Function che calcola la funzione di Bessel J(i,x).       
 ! imax numero massimo di iterazioni (dato 20) 
 !********************************************************************** 
-double precision function bessel(i,x) 
+double precision function bessel_jn(i,x) 
   INTEGER, INTENT(IN) :: i
   DOUBLE PRECISION, INTENT(IN) :: x
   INTEGER, PARAMETER :: imax=20
@@ -2040,13 +2047,13 @@ double precision function bessel(i,x)
   jfat=1 
   jpifat=1 
   ifl=1 
-  bessel=0.d0 
+  bessel_jn=0.d0 
   do 2 j=1,imax 
      dbess=x2p*ifl/ifat 
      dbess=dbess/jfat 
      dbess=dbess/jpifat 
 !c      write(*,*)dbess          
-     bessel=bessel+dbess 
+     bessel_jn=bessel_jn+dbess 
 !c      write(*,*)i,j,ifat,jfat,jpifat        
      if(dabs(dbess).lt.epbs)return 
      jpifat=jpifat*(i+j) 
@@ -2055,8 +2062,8 @@ double precision function bessel(i,x)
      x2p=x2p*x2*x2 
 2 ENDDO
   write(ipirip,101)j-1,dbess 
-101 format('bessel: non convergence; last term=',i5,d18.6) 
-END function bessel
+101 format('bessel_jn: non convergence; last term=',i5,d18.6) 
+END function bessel_jn
 ! ================================            
 ! invaxv            
 !      

@@ -1,7 +1,7 @@
 include ../make.flags
 include modules.flags
 
-all: giffv.x conv9.x prop_class.x prop_tax.x propsynt3big.x propsyntwoway.x prop9.x  inbaric.x inbarmerc.x orbit9.x orbit9t.x propert3.x orbselect.x secre9.x purge.x merg.x mergt.x selextt.x selext.x magn.x mergsec.x splitsec.x
+all: giffv.x conv9.x prop_class.x prop_tax.x propsynt3big.x propsyntwoway.x prop9.x  inbaric.x inbarmerc.x orbit9.x orbit9t.x propert3.x orbselect.x secre9.x purge.x merg.x mergt.x selextt.x selext.x magn.x mergsec.x splitsec.x extract_sec.x
 
 #packages
 
@@ -88,6 +88,9 @@ mergsec.x: mergsec.o ../lib/libsuit.a
 
 splitsec.x: splitsec.o ../lib/libsuit.a
 	$(FC) $(FFLAGS) splitsec.o -L../lib/ -lsuit -o splitsec.x
+
+extract_sec.x: extract_sec.o ../lib/libsuit.a
+	$(FC) $(FFLAGS) extract_sec.o -L../lib/ -lsuit -o extract_sec.x
 
 merg.x: merg.o ../lib/libsuit.a
 	$(FC) $(FFLAGS) merg.o -L../lib/ -lsuit -o merg.x

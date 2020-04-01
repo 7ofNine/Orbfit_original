@@ -49,7 +49,7 @@ PROGRAM prop_class
 ! read proper elements
 ! -------------------------------------------------------------
  npr=0
-! open input file, numbered and multiopposition  
+! open input file, numbered 
  INQUIRE(file='numb_res.syn', exist=isthere)
  IF(isthere)THEN
     CALL filopn(in_pro,'numb_res.syn','old')
@@ -83,13 +83,14 @@ PROGRAM prop_class
     CALL filclo(in_sig,' ')
  ELSE
     WRITE(iun_log,*)'no proper elements for Trojans'
+    STOP
  ENDIF
 ! open input file, multiopposition
- INQUIRE(file='mult.syn', exist=isthere)
+ INQUIRE(file='mult_res.syn', exist=isthere)
  IF(isthere)THEN
-    CALL filopn(in_pro,'mult.syn','old')
+    CALL filopn(in_pro,'mult_res.syn','old')
     CALL  input_propels(in_pro,npr,err_line)
-    WRITE(iun_log,*)' input ',npr,' prop. els of multioppostion'
+    WRITE(iun_log,*)' input ',npr,' prop. els including multioppostion'
 ! error return?
     IF(err_line.gt.0)THEN
        WRITE(*,*)' error return in proper elements multiopp from record ',err_line
@@ -99,7 +100,6 @@ PROGRAM prop_class
  ELSE
     WRITE(iun_log,*)'no proper elements for multiopposition'
  ENDIF
-
 
 ! -------------------------------------------------------------
 ! initialize family records for all the asteroids with proper elements 

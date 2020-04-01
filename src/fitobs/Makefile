@@ -1,7 +1,7 @@
 include ../make.flags
 include modules.flags
 
-all: fitobs.x catpro.x deliver
+all: fitobs.x catpro.x
 
 #packages
 
@@ -49,7 +49,5 @@ windist:
 winclean:windist
 	@del ..\..\bin\fitobs.*
 
-deliver:
-	-(cp fitobs.x ../../bin/.)
 # Dependencies
 include make.dep

@@ -274,7 +274,7 @@ SUBROUTINE wri_attri(iunatt,iunrat,name0,att,trou,nvir)
   DOUBLE PRECISION hour,arc2,ds2,curv,accel,curv_unc,acc_unc,eta_unc
 ! write .att file
   IF(iunatt.ge.0)THEN
-     IF(iunatt.eq.0)  WRITE(iunatt,201)
+     IF(iunatt.eq.0)  WRITE(*,201)
 201  FORMAT(' t(MJD)        R.A.          DEC.       radot       decdot      tround     rarou     decrou nobs  ', &
  &  '  arc(d)   name   obscod    s(ra)   s(dec)   s(rad)   s(decd)   c(aad)   c(ddd)   pr.m(deg)   appmag')
      atrou=att%angles(1)+(trou-att%tdtobs)*att%angles(3)
@@ -291,24 +291,36 @@ SUBROUTINE wri_attri(iunatt,iunrat,name0,att,trou,nvir)
      caad=att%g(1,3)/(sa*sadot)
      cddd=att%g(2,4)/(sd*sddot)
      IF(PRESENT(nvir))THEN
-        WRITE(iunatt,300)att%tdtobs,att%angles,trou,atrou,dtrou,   &
-     &        att%nobs,att%arc,name0,att%obscod,nvir,                &
-     &        sa,sd,sadot,sddot,caad,cddd,att%eta*degrad,att%apm
-300     FORMAT(f13.6,1x,f10.7,1x,f10.7,1p,1x,d12.5,1x,d12.5,1x,0p, &
-     &      f9.2,1x,f8.5,1x,f8.5,1x,i3,1x,f8.2,1x,a9,1x,a3,1x,i5,    &
-     &      1p,6(1x,d10.3),0p,1x,f9.4,1x,f5.2)
+        IF(iunatt.eq.0)THEN
+           WRITE(*,300)att%tdtobs,att%angles,trou,atrou,dtrou,   &
+             &        att%nobs,att%arc,name0,att%obscod,nvir,                &
+             &        sa,sd,sadot,sddot,caad,cddd,att%eta*degrad,att%apm
+        ELSE
+           WRITE(iunatt,300)att%tdtobs,att%angles,trou,atrou,dtrou,   &
+             &        att%nobs,att%arc,name0,att%obscod,nvir,                &
+             &        sa,sd,sadot,sddot,caad,cddd,att%eta*degrad,att%apm
+        END IF
      ELSE
-        WRITE(iunatt,100)att%tdtobs,att%angles,trou,atrou,dtrou,   &
-     &        att%nobs,att%arc,name0,att%obscod,                     &
-     &        sa,sd,sadot,sddot,caad,cddd,att%eta*degrad,att%apm
-100     FORMAT(f13.6,1x,f10.7,1x,f10.7,1p,1x,d12.5,1x,d12.5,1x,0p,      &
-     &      f9.2,1x,f8.5,1x,f8.5,1x,i3,1x,f8.2,1x,a9,1x,a3,          &
-     &      1p,6(1x,d10.3),0p,1x,f9.4,1x,f5.2)
+        IF(iunatt.eq.0)THEN
+           WRITE(*,100)att%tdtobs,att%angles,trou,atrou,dtrou,   &
+                &        att%nobs,att%arc,name0,att%obscod,                     &
+                &        sa,sd,sadot,sddot,caad,cddd,att%eta*degrad,att%apm
+        ELSE
+           WRITE(iunatt,100)att%tdtobs,att%angles,trou,atrou,dtrou,   &
+                &        att%nobs,att%arc,name0,att%obscod,                     &
+                &        sa,sd,sadot,sddot,caad,cddd,att%eta*degrad,att%apm
+        END IF
      ENDIF
   ENDIF
+300 FORMAT(f13.6,1x,f10.7,1x,f10.7,1p,1x,d12.5,1x,d12.5,1x,0p, &
+         &      f9.2,1x,f8.5,1x,f8.5,1x,i3,1x,f8.2,1x,a9,1x,a3,1x,i5,    &
+         &      1p,6(1x,d10.3),0p,1x,f9.4,1x,f5.2)
+100 FORMAT(f13.6,1x,f10.7,1x,f10.7,1p,1x,d12.5,1x,d12.5,1x,0p,      &
+         &      f9.2,1x,f8.5,1x,f8.5,1x,i3,1x,f8.2,1x,a9,1x,a3,          &
+         &      1p,6(1x,d10.3),0p,1x,f9.4,1x,f5.2)
 ! write .rat file header
   IF(iunrat.lt.0)RETURN
-  IF(iunrat.eq.0)WRITE(iunrat,200)
+  IF(iunrat.eq.0)WRITE(*,200)
 200 FORMAT('  name     nobs   arctime year nr st   arcang        pr.m        pmunc      ', &
       & '  geocurv      accel        gcunc        accunc       RMS          RMS(a)       RMS(d)', &
       & '    cor-g-a   time') 
@@ -323,20 +335,34 @@ SUBROUTINE wri_attri(iunatt,iunrat,name0,att,trou,nvir)
   eta_unc=att%rms_eta*degrad
   IF(abs(curv).gt.999.d0.or.abs(accel).gt.999.d0.or.abs(att%rms_obs) &
   &    .gt.999.d0.or.abs(att%rms_a).gt.999.d0.or.abs(att%rms_d).gt.999.d0)THEN
-     WRITE(iunrat,101)name0,att%nobs,att%arc,yearm,att%nrad,att%nsta,   &
-      & att%sph*degrad,att%eta*degrad,eta_unc,                            &
-      & curv,accel,curv_unc,acc_unc,att%rms_obs,att%rms_a,att%rms_d,      &
-      & att%c_curvacc,att%tdtobs
-101  FORMAT(a9,1x,i4,1x,f10.4,1x,i4,1x,i2,1x,i1,3(1x,f12.7),       &
- &    1p,4(1x,d12.5),0p,3(1x,d12.5),1x,f7.4,1x,f13.6)
+     IF(iunrat.eq.0)THEN
+        WRITE(*,101)name0,att%nobs,att%arc,yearm,att%nrad,att%nsta,   &
+             & att%sph*degrad,att%eta*degrad,eta_unc,                            &
+             & curv,accel,curv_unc,acc_unc,att%rms_obs,att%rms_a,att%rms_d,      &
+             & att%c_curvacc,att%tdtobs
+     ELSE
+        WRITE(iunrat,101)name0,att%nobs,att%arc,yearm,att%nrad,att%nsta,   &
+             & att%sph*degrad,att%eta*degrad,eta_unc,                            &
+             & curv,accel,curv_unc,acc_unc,att%rms_obs,att%rms_a,att%rms_d,      &
+             & att%c_curvacc,att%tdtobs
+     END IF
   ELSE
-     WRITE(iunrat,102)name0,att%nobs,att%arc,yearm,att%nrad,att%nsta,   &
-      & att%sph*degrad,att%eta*degrad,eta_unc,                            &
-      & curv,accel,curv_unc,acc_unc,att%rms_obs,att%rms_a,att%rms_d,      &
-      & att%c_curvacc,att%tdtobs
-102  FORMAT(a9,1x,i4,1x,f10.4,1x,i4,1x,i2,1x,i1,3(1x,f12.7),       &
- &    4(1x,f12.7),3(1x,f12.7),1x,f7.4,1x,f13.6)
+     IF(iunrat.eq.0)THEN
+        WRITE(*,102)name0,att%nobs,att%arc,yearm,att%nrad,att%nsta,   &
+             & att%sph*degrad,att%eta*degrad,eta_unc,                            &
+             & curv,accel,curv_unc,acc_unc,att%rms_obs,att%rms_a,att%rms_d,      &
+             & att%c_curvacc,att%tdtobs
+     ELSE
+        WRITE(iunrat,102)name0,att%nobs,att%arc,yearm,att%nrad,att%nsta,   &
+             & att%sph*degrad,att%eta*degrad,eta_unc,                            &
+             & curv,accel,curv_unc,acc_unc,att%rms_obs,att%rms_a,att%rms_d,      &
+             & att%c_curvacc,att%tdtobs
+     END IF
   ENDIF
+101 FORMAT(a9,1x,i4,1x,f10.4,1x,i4,1x,i2,1x,i1,3(1x,f12.7),       &
+         &    1p,4(1x,d12.5),0p,3(1x,d12.5),1x,f7.4,1x,f13.6)
+102 FORMAT(a9,1x,i4,1x,f10.4,1x,i4,1x,i2,1x,i1,3(1x,f12.7),       &
+         &    4(1x,f12.7),3(1x,f12.7),1x,f7.4,1x,f13.6)
 END SUBROUTINE wri_attri
 
 SUBROUTINE attri_comp(m,obs,obsw,att,error,qobs,qpobs,qppobs)

@@ -128,20 +128,6 @@ PROGRAM propsynt
         call dosemim(x,y,tf,ntf,pe0(1),dpe0(1),fe0(1),dfe0(1),          &
      &     ang0(1),rmsang0(1),devmax,iwri)
 ! =====================================================                 
-!   compute proper eccentricity from all data                           
-        WRITE(9,*)' =========== eccentricity ' 
-        DO j=1,ntf 
-          x(j)=elf(3,n,j) 
-          y(j)=elf(2,n,j) 
-        ENDDO
-        IF(pe0(1).gt.2.5d0.and.pe0(1).lt.2.7d0)THEN
-           resflag=0 ! non-resonant, but can be changed to resonance after test
-        ELSE
-           resflag=-1 ! force ignore secular resonance
-        ENDIF 
-        call doecc(x,y,tf,ntf,gp,klisg,pe0(2),dpe0(2),                  &
-     &        fe0(2),dfe0(2),ang0(2),rmsang0(2),iwri,resflag,phalib)
-! =====================================================                 
 !   compute proper inclination from all data                            
         WRITE(9,*)' =========== inclination ' 
         DO j=1,ntf 
@@ -154,6 +140,21 @@ PROGRAM propsynt
 ! conversion from tg(I/2) to sinI                                       
         dpe0(3)=2.d0*dpe0(3)* cos(2.d0*atan(pe0(3))) 
         pe0(3)=sin(2.d0*atan(pe0(3))) 
+! =====================================================                 
+!   compute proper eccentricity from all data                           
+        WRITE(9,*)' =========== eccentricity ' 
+        DO j=1,ntf 
+          x(j)=elf(3,n,j) 
+          y(j)=elf(2,n,j) 
+        ENDDO
+        IF(pe0(1).gt.2.5d0.and.pe0(1).lt.2.7d0)THEN
+           resflag=0 ! non-resonant, but can be changed to resonance after test
+        ELSE
+           resflag=-1 ! force ignore secular resonance
+        ENDIF 
+        CALL doecc(x,y,tf,ntf,gp,klisg,pe0(2),dpe0(2),                  &
+     &        fe0(2),dfe0(2),ang0(2),rmsang0(2),iwri,resflag,phalib,pe0(3),pe0(1))
+!        WRITE(*,*) 0, pe0(2), fe0(2)
 ! =====================================================                 
 !   running box test for accuracy; ib=box index                         
         ib=0 
@@ -173,15 +174,7 @@ PROGRAM propsynt
      &            dfe(ib,1),ph(ib,1),rmsph(ib,1),devmad,iwri)       
 !          IF(pe(ib,1).gt.9.9999999d0)pe(ib,1)=9.9999999d0              
 !
-          DO j=1,ndap 
-            x(j)=elf(3,n,j+i0) 
-            y(j)=elf(2,n,j+i0) 
-          ENDDO
-! to avoid that different running boxes have different resonance status
-          IF(resflag.eq.0) resflag=-1 
-          CALL doecc(x,y,tf(i1),ndap,gp,klisg,pe(ib,2),dpe(ib,2),fe(ib,2),   &
-     &        dfe(ib,2),ph(ib,2),rmsph(ib,2),iwri,resflag,phalibb(ib))
-!                                                                       
+! proper inclination
           DO j=1,ndap 
             x(j)=elf(5,n,j+i0) 
             y(j)=elf(4,n,j+i0) 
@@ -191,6 +184,17 @@ PROGRAM propsynt
 ! conversion from tg(I/2) to sinI                                       
           pe(ib,3)=sin(2.d0*atan(pe(ib,3))) 
           dpe(ib,3)=2.d0*dpe(ib,3)* cos(2.d0*atan(pe(ib,3))) 
+! to avoid that different running boxes have different resonance status
+          IF(resflag.eq.0) resflag=-1
+! proper eccentricity 
+          DO j=1,ndap 
+            x(j)=elf(3,n,j+i0) 
+            y(j)=elf(2,n,j+i0) 
+          ENDDO
+          CALL doecc(x,y,tf(i1),ndap,gp,klisg,pe(ib,2),dpe(ib,2),fe(ib,2),   &
+     &        dfe(ib,2),ph(ib,2),rmsph(ib,2),iwri,resflag,phalibb(ib),pe(ib,3),pe(ib,1))
+!          WRITE(*,*) ib, pe(ib,2),fe(ib,2)
+
    50   ENDDO 
         nb=ib 
 !   compute max deviation, standard deviation                           

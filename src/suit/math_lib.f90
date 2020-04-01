@@ -887,7 +887,7 @@ END subroutine tchinv_q
    dstar=0.d0 
    det=1.d0 
    izer=0 
-   do 70 i=1,6 
+   do 70 i=1,n 
       det=det*aval(i) 
       if (aval(i).gt.0.d0) then 
          dstar(i,i)=1.d0/aval(i) 

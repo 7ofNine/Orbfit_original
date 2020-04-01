@@ -346,6 +346,7 @@ SUBROUTINE ephemc(unit,el0,unc0,defcov,t1,t2,dt,idsta,scale,fields,unitmax,mjdca
   USE fund_const
   USE pred_obs
   USE orbit_elements                 
+  USE close_app, ONLY: fix_mole, kill_propag
   IMPLICIT NONE 
   
   INTEGER unit,idsta 
@@ -387,8 +388,8 @@ SUBROUTINE ephemc(unit,el0,unc0,defcov,t1,t2,dt,idsta,scale,fields,unitmax,mjdca
 ! phase, distance to Earth, distance to Sun, solar elongation, galactit lat. and longitude, 
 ! elevation, elevation sun, lunar elongation
   DOUBLE PRECISION :: pha,dis,dsun,elo,gallat,gallon,elev,elsun, elmoon 
-  INTEGER lench 
-  LOGICAL sub_ast_station_light, umbra, penumbra,max_bright_exist
+  INTEGER lench, ieph
+  LOGICAL sub_ast_station_light, umbra, penumbra,max_bright_exist,forw_skip
   EXTERNAL lench 
                                                                         
   DATA cmonth/'Jan','Feb','Mar','Apr','May','Jun',                  &
@@ -632,7 +633,7 @@ SUBROUTINE ephemc(unit,el0,unc0,defcov,t1,t2,dt,idsta,scale,fields,unitmax,mjdca
         ELSE 
            lf2=6 
         END IF
-        CALL filstr('App. motion',cval,lf1+lf2,inb1,0) 
+        CALL filstr('App. motion',cval,lf1+lf2+lf1+6,inb1,0) 
         head1(lh+1:)=cval 
         IF(iepfor.EQ.1) THEN 
            CALL filstr('RA*cosDE',cval,lf1,inb1,0) 
@@ -650,14 +651,26 @@ SUBROUTINE ephemc(unit,el0,unc0,defcov,t1,t2,dt,idsta,scale,fields,unitmax,mjdca
            CALL filstr(amuni,cval,lf2,inb1,0) 
            head3(lh+1:)=cval 
            head4(lh+1:)='  ==================' 
-        ELSE 
+           lh=lh+lf2 
+           CALL filstr('Vel',cval,lf1,inb1,0) 
+           head2(lh+1:)=cval 
+           CALL filstr(amuni,cval,lf1,inb1,0) 
+           head3(lh+1:)=cval 
+           head4(lh+1:)='  ==================' 
+           lh=lh+lf2 
+           CALL filstr('PA',cval,6,inb2,0) 
+           head2(lh+1:)=cval 
+           CALL filstr('deg',cval,6,inb2,0) 
+           head3(lh+1:)=cval 
+           head4(lh+1:)=' =====' 
+       ELSE 
            CALL filstr('PA',cval,lf2,inb2,0) 
            head2(lh+1:)=cval 
            CALL filstr('deg',cval,lf2,inb2,0) 
            head3(lh+1:)=cval 
            head4(lh+1:)=' =====' 
         END IF
-        lh=lh+lf2 
+        lh=lh+6 
         outmot=.true. 
      ELSE 
         lf=lench(field(i)) 
@@ -672,21 +685,31 @@ SUBROUTINE ephemc(unit,el0,unc0,defcov,t1,t2,dt,idsta,scale,fields,unitmax,mjdca
 331 FORMAT('Sorry, I don''t know "',A,'" reference system') 
 320 FORMAT('WARNING(ephemc): I do not know how to use "',A,           &
      &    '" as units for apparent motion;'/                            &
-     &    17X,'using instead default units "',A,'"')                    
-  WRITE(unit,100) head1(1:lh) 
-  WRITE(unit,100) head2(1:lh) 
-  WRITE(unit,100) head3(1:lh) 
-  WRITE(unit,100) head4(1:lh) 
+     &    17X,'using instead default units "',A,'"')   
+
+  IF (.not.kill_propag) THEN
+     WRITE(unit,100) head1(1:lh) 
+     WRITE(unit,100) head2(1:lh) 
+     WRITE(unit,100) head3(1:lh) 
+     WRITE(unit,100) head4(1:lh) 
+  END IF
 100 FORMAT(A) 
    
   CALL set_restart(.true.) 
-                                                                        
+! counter of computed ephemerides
+  ieph=0
+! control to skip propagation after impact
+  forw_skip=.false.
 ! Start loop on ephemeris epochs                                        
   DO 1 k=1,neph 
      ip=srtord(k) 
      tdt=teph(ip) 
+     IF(forw_skip.and.tdt.gt.el0%t) CYCLE
 ! Numerical integration 
      inl=1                                                
+     IF(fix_mole)THEN
+          kill_propag=.false.
+     ENDIF
      IF(outerr) THEN 
         CALL predic_obs(el0,idsta,tdt,obstyp,      &
      &        alpha,delta,mag,inl,                                    &
@@ -694,8 +717,8 @@ SUBROUTINE ephemc(unit,el0,unc0,defcov,t1,t2,dt,idsta,scale,fields,unitmax,mjdca
      &        ADOT0=adot,DDOT0=ddot,DIS0=dis,PHA0=pha,DSUN0=dsun,     &
      &        ELO0=elo,GALLAT0=gallat,ELEV0=elev,ELSUN0=elsun,        & 
      &        ELMOON0=elmoon,GALLON0=gallon,SUB_AST_STATION_LIGHT0=sub_ast_station_light, &
-     &        UMBRA0=umbra,PENUMBRA0=penumbra)
-     ELSE 
+     &        UMBRA0=umbra,PENUMBRA0=penumbra)         
+    ELSE 
         CALL predic_obs(el0,idsta,tdt,obstyp,  &
      &        alpha,delta,mag,inl,        &
      &        ADOT0=adot,DDOT0=ddot,DIS0=dis,PHA0=pha,DSUN0=dsun,   &
@@ -703,8 +726,22 @@ SUBROUTINE ephemc(unit,el0,unc0,defcov,t1,t2,dt,idsta,scale,fields,unitmax,mjdca
      &        ELMOON0=elmoon,GALLON0=gallon,SUB_AST_STATION_LIGHT0=sub_ast_station_light, &
      &        UMBRA0=umbra,PENUMBRA0=penumbra)
      END IF
-     CALL set_restart(.false.) 
-
+!     WRITE(unit,*)'FIX, KILL= ', fix_mole, kill_propag
+     IF(fix_mole.and.kill_propag) THEN
+        IF(tdt.gt.el0%t) THEN
+           WRITE(unit,*)' Impact after the initial conditions'
+           forw_skip=.true.
+           CALL set_restart(.true.)
+           CYCLE
+        ELSE
+           WRITE(unit,*)' Impact before the initial conditions'
+           GOTO 33
+        ENDIF
+     ELSE
+!       WRITE(unit,*)' ieph=', ieph
+        ieph=ieph+1
+        CALL set_restart(.false.) 
+     ENDIF
 !     WRITE(11,111)tdt,alpha,delta,elev,elsun
 !111  FORMAT(f15.8,1x,f12.9,1x,f12.9,1x,f10.5,1x,f10.5)     
 ! COMPOSITION OF OUTPUT RECORD                                          
@@ -779,7 +816,7 @@ SUBROUTINE ephemc(unit,el0,unc0,defcov,t1,t2,dt,idsta,scale,fields,unitmax,mjdca
              WRITE(outrec(lr+1:),215) mag 
              lr=lr+8 
           END IF
-! Max Bright Magnitude HP                                                            
+! Max Bright Magnitude HP 
        ELSEIF(field(i).EQ.'maxmag') THEN 
           IF(outmag) THEN
              maxmag=mag-5d0*log10(dis*aukm/(dis*aukm-eradkm))
@@ -852,7 +889,14 @@ SUBROUTINE ephemc(unit,el0,unc0,defcov,t1,t2,dt,idsta,scale,fields,unitmax,mjdca
              lr=lr+lf1 
              WRITE(outrec(lr+1:),amfor) ddot*cvf 
              lr=lr+lf2 
-          ELSE 
+             velsiz=SQRT((adot*cos(delta))**2+ddot**2)
+             WRITE(outrec(lr+1:),amfor) velsiz*cvf 
+             lr=lr+lf1 
+             pa=ATAN2(adot*cos(delta),ddot) 
+             IF(pa.LT.0.D0) pa=pa+dpig 
+             WRITE(outrec(lr+1:),205) pa*degrad 
+             lr=lr+6 
+           ELSE 
              velsiz=SQRT((adot*cos(delta))**2+ddot**2)
              WRITE(outrec(lr+1:),amfor) velsiz*cvf 
              lr=lr+lf1 
@@ -907,20 +951,27 @@ SUBROUTINE ephemc(unit,el0,unc0,defcov,t1,t2,dt,idsta,scale,fields,unitmax,mjdca
        ENDIF
     ENDIF
 1 END DO
+33 CONTINUE
 
 ! write max brightness magnitude in file .max
  IF(PRESENT(unitmax)) THEN
     WRITE(unitmax,100) maxrec
  ENDIF
+
 ! CALL set_restart(.true.) 
                                                                         
-                                                                        
 ! Output of ephemeris records in the required order                     
+
  DO 3 ip=1,neph 
-    lr=lrv(ip) 
-    WRITE(unit,100) recv(ip)(1:lr) 
+    lr=lrv(ip)
+    IF(lr.gt.0)THEN 
+       WRITE(unit,100) recv(ip)(1:lr)
+    ENDIF 
 3 END DO
-                                                                        
+ IF(ieph.lt.neph) THEN
+    WRITE(unit,*) ' Ephemerides not computed because of an impact'
+ ENDIF
+                                                                         
 END SUBROUTINE ephemc
 ! Copyright (C) 1997 by Mario Carpino (carpino@brera.mi.astro.it)       
 ! Version: December 12, 1997                                            

@@ -476,7 +476,7 @@ CONTAINS
                    ENDIF
                    siglim=deltasig/2.d0 
                    CALL achillestp(vas_tr(1),siglim,type,        &
-                        &                iunwarn,iunnew,va_tracemin,niter,fals_conv,fals_notp,deltasig)
+                        &                iunwarn,iunnew,va_tracemin,niter,fals_conv,fals_notp,deltasig,limit_stretch)
                    IF(fals_notp)THEN 
                       WRITE(iunnew,*)' achillestp no TP ',type 
                    ELSE 
@@ -505,7 +505,7 @@ CONTAINS
                    ENDIF
                    siglim=deltasig/2.d0
                    CALL achillestp(vas_tr(lre),siglim,type,      &
-                        &                iunwarn,iunnew,va_tracemin,niter,fals_conv,fals_notp,deltasig)
+                        &                iunwarn,iunnew,va_tracemin,niter,fals_conv,fals_notp,deltasig,limit_stretch)
                    ! if failure write failure record, else possibly risk record            
                    IF(fals_notp)THEN 
                       WRITE(iunnew,*)' achillestp no TP ',type 
@@ -533,6 +533,12 @@ CONTAINS
                 END IF
 !  if falslog proposes to try regula falsi, and the MOID is low, do it  
                 IF(type.eq.'SIMPMIN'.or.type.eq.'INTEMIN')THEN 
+                   IF(limit_stretch.GT.0.d0)THEN
+                      IF(vas_tr(j-1)%stretch.GT.limit_stretch .OR. &
+                           & vas_tr(j-1)%stretch*vas_tr(j-1)%width.GT.vas_tr(j-1)%b**2/2.d0*1.d11)THEN
+                         CYCLE
+                      END IF
+                   END IF
                    CALL findminctp(vas_tr(j-1),x1,x2,type,                  &
                         &                iunwarn,iunnew,va_tracemin,                  &
                         &                fals_conv,niter,fals_notp,deltasig)  
@@ -542,7 +548,7 @@ CONTAINS
                       siglim=deltasig/2.d0 
                       CALL achillestp(vas_tr(j-1),siglim,     &
                            &                      type,iunwarn,iunnew,va_tracemin,               &
-                           &                      niter,fals_conv,fals_notp,deltasig)                  
+                           &                      niter,fals_conv,fals_notp,deltasig,limit_stretch)                  
                       IF(fals_notp.or..not.fals_conv)THEN 
                          WRITE(iunnew,*)' achillestp no TP/conv ',type 
                       ELSE 
@@ -551,7 +557,7 @@ CONTAINS
                       WRITE(iunnew,*)' falsi no TP ' 
                       siglim=delta_sigma/2.d0
                       CALL achillestp(vas_tr(j),siglim,type,iunwarn,iunnew,va_tracemin,    &
-                           &                      niter,fals_conv,fals_notp,deltasig)                  
+                           &                      niter,fals_conv,fals_notp,deltasig,limit_stretch)                  
                       IF(fals_notp.or..not.fals_conv)THEN 
                          WRITE(iunnew,*)' achillestp no TP/conv ',type 
                       ELSE 
@@ -574,7 +580,7 @@ CONTAINS
                          siglim=deltasig*abs(vas_tr(j-1)%rindex-va_tracemin%rindex)/2.d0 
                          CALL achillestp(vas_tr(j-1),siglim,     &
                               &                      type,iunwarn,iunnew,va_tracemin,               &
-                              &                      niter,fals_conv,fals_notp,deltasig)                  
+                              &                      niter,fals_conv,fals_notp,deltasig,limit_stretch)                  
                          IF(fals_notp.or..not.fals_conv)THEN 
                             WRITE(iunnew,*)' achillestp no TP/conv ',type 
                          ELSE 
@@ -586,7 +592,7 @@ CONTAINS
                          siglim=deltasig*abs(vas_tr(j)%rindex-va_tracemin%rindex)/2.d0 
                          CALL achillestp(vas_tr(j),siglim,        &
                               &                      type,iunwarn,iunnew,va_tracemin,               &
-                              &                      niter,fals_conv,fals_notp,deltasig)                  
+                              &                      niter,fals_conv,fals_notp,deltasig,limit_stretch)                  
                          IF(fals_notp.or..not.fals_conv)THEN 
                             WRITE(iunnew,*)' achillestp no TP/conv ', type 
                          ELSE 
@@ -599,11 +605,17 @@ CONTAINS
                 ELSEIF(type.eq.'INTEUNK')THEN 
                    siglim=deltasig/2.d0 
                    IF(dr2ds(j-1).lt.0.d0)THEN 
+                      IF(limit_stretch.GT.0.d0)THEN
+                         IF(vas_tr(j-1)%stretch.GT.limit_stretch .OR. &
+                              & vas_tr(j-1)%stretch*vas_tr(j-1)%width.GT.vas_tr(j-1)%b**2/2.d0*1.d11)THEN
+                            CYCLE
+                         END IF
+                      END IF
                       CALL achillestp(vas_tr(j-1),siglim,type,   &
-                           &                iunwarn,iunnew,va_tracemin,niter,fals_conv,fals_notp,deltasig)
+                           &                iunwarn,iunnew,va_tracemin,niter,fals_conv,fals_notp,deltasig,limit_stretch)
                    ELSEIF(dr2ds(j).gt.0.d0)THEN 
                       CALL achillestp(vas_tr(j),siglim,type,     &
-                           &                iunwarn,iunnew,va_tracemin,niter,fals_conv,fals_notp,deltasig)
+                           &                iunwarn,iunnew,va_tracemin,niter,fals_conv,fals_notp,deltasig,limit_stretch)
                    ELSE 
                       WRITE(iunnew,*)' case not understood ', type 
                    ENDIF
@@ -613,10 +625,16 @@ CONTAINS
                       CALL riskchecktp(va_tracemin,t0,type,no_risk,iunnew,iunwarn,iunrisk)
                    ENDIF
                 ELSEIF(type.eq.'ENTADES')THEN 
+                   IF(limit_stretch.GT.0.d0)THEN
+                      IF(vas_tr(j-1)%stretch.GT.limit_stretch .OR. &
+                           & vas_tr(j-1)%stretch*vas_tr(j-1)%width.GT.vas_tr(j-1)%b**2/2.d0*1.d11)THEN
+                         CYCLE
+                      END IF
+                   END IF
                    ! look for first minimum
                    siglim=deltasig/2.d0 
                    CALL achillestp(vas_tr(j-1),siglim,type,      &
-                        &                iunwarn,iunnew,va_tracemin,niter,fals_conv,fals_notp,deltasig)
+                        &                iunwarn,iunnew,va_tracemin,niter,fals_conv,fals_notp,deltasig,limit_stretch)
                    IF(fals_notp)THEN 
                       WRITE(iunnew,*)' achillestp no TP ',type 
                    ELSE 
@@ -628,7 +646,7 @@ CONTAINS
                    ! look for last minimum    
                    siglim=deltasig/2.d0 
                    CALL achillestp(vas_tr(j),siglim,type,        &
-                        &                iunwarn,iunnew,va_tracemin,niter,fals_conv,fals_notp,deltasig)
+                        &                iunwarn,iunnew,va_tracemin,niter,fals_conv,fals_notp,deltasig,limit_stretch)
                    IF(fals_notp)THEN 
                       WRITE(iunnew,*)' achillestp no TP ',type 
                    ELSE 
@@ -744,7 +762,7 @@ CONTAINS
                    ENDIF
                    siglim=deltasig/2.d0 
                    CALL achillestp(vas_tr(1),siglim,typ,        &
-                        &                iunwarn,iunnew,va_tracemin,niter,fals_conv,fals_notp,deltasig)
+                        &                iunwarn,iunnew,va_tracemin,niter,fals_conv,fals_notp,deltasig,limit_stretch)
                    IF(fals_notp)THEN 
                       !                      WRITE(iunnew,*)' achillestp no TP ',typ 
                    ELSE 
@@ -774,7 +792,7 @@ CONTAINS
                    ENDIF
                    siglim=deltasig/2.d0 
                    CALL achillestp(vas_tr(lre),siglim,typ,      &
-                        &                iunwarn,iunnew,va_tracemin,niter,fals_conv,fals_notp,deltasig)
+                        &                iunwarn,iunnew,va_tracemin,niter,fals_conv,fals_notp,deltasig,limit_stretch)
                    ! if failure write failure record, else possibly risk record            
                    IF(fals_notp)THEN 
                       !                      WRITE(iunnew,*)' achillestp no TP ',typ 
@@ -803,6 +821,12 @@ CONTAINS
                 END IF
 !  if falslog proposes to try regula falsi, and the MOID is low, do it  
                 IF(typ.EQ.'SIMPMIN'.OR.typ.EQ.'INTEMIN')THEN 
+                   IF(limit_stretch.GT.0.d0)THEN
+                      IF(vas_tr(j-1)%stretch.GT.limit_stretch .OR. &
+                           & vas_tr(j-1)%stretch*vas_tr(j-1)%width.GT.vas_tr(j-1)%b**2/2.d0*1.d11)THEN
+                         CYCLE
+                      END IF
+                   END IF
                    CALL findminctp(vas_tr(j-1),x1,x2,typ,                  &
                         &                iunwarn,iunnew,va_tracemin,                  &
                         &                fals_conv,niter,fals_notp,deltasig)                        
@@ -812,7 +836,7 @@ CONTAINS
                       siglim=deltasig/2.d0 
                       CALL achillestp(vas_tr(j-1),siglim,     &
                            &                      typ,iunwarn,iunnew,va_tracemin,               &
-                           &                      niter,fals_conv,fals_notp,deltasig)                  
+                           &                      niter,fals_conv,fals_notp,deltasig,limit_stretch)                  
                       IF(fals_notp.or..not.fals_conv)THEN 
                          !                         WRITE(iunnew,*)' achillestp no TP/conv ',typ 
                       ELSE 
@@ -822,7 +846,7 @@ CONTAINS
                       siglim=deltasig/2.d0 
                       CALL achillestp(vas_tr(j),siglim,       &
                            &                      typ,iunwarn,iunnew,va_tracemin,               &
-                           &                      niter,fals_conv,fals_notp,deltasig)                  
+                           &                      niter,fals_conv,fals_notp,deltasig,limit_stretch)                  
                       IF(fals_notp.or..not.fals_conv)THEN 
                          !                         WRITE(iunnew,*)' achillestp no TP/conv ',typ 
                       ELSE 
@@ -848,7 +872,7 @@ CONTAINS
                          siglim=deltasig*abs(vas_tr(j-1)%rindex-va_tracemin%rindex)/2.d0 
                          CALL achillestp(vas_tr(j-1),siglim,     &
                               &                      typ,iunwarn,iunnew,va_tracemin,               &
-                              &                      niter,fals_conv,fals_notp,deltasig)                  
+                              &                      niter,fals_conv,fals_notp,deltasig,limit_stretch)                  
                          IF(fals_notp.or..not.fals_conv)THEN 
                             !                            WRITE(iunnew,*)' achillestp no TP/conv ',typ 
                          ELSE 
@@ -860,7 +884,7 @@ CONTAINS
                          siglim=deltasig*abs(vas_tr(j)%rindex-va_tracemin%rindex)/2.d0 
                          CALL achillestp(vas_tr(j),siglim,        &
                               &                      typ,iunwarn,iunnew,va_tracemin,               &
-                              &                      niter,fals_conv,fals_notp,deltasig)                  
+                              &                      niter,fals_conv,fals_notp,deltasig,limit_stretch)                  
                          IF(fals_notp.or..not.fals_conv)THEN 
                             !                            WRITE(iunnew,*)' achillestp no TP/conv ', typ 
                          ELSE 
@@ -873,11 +897,17 @@ CONTAINS
                 ELSEIF(typ.eq.'INTEUNK')THEN 
                    siglim=deltasig/2.d0 
                    IF(dr2ds(j-1).lt.0.d0)THEN 
+                      IF(limit_stretch.GT.0.d0)THEN
+                         IF(vas_tr(j-1)%stretch.GT.limit_stretch .OR. &
+                              & vas_tr(j-1)%stretch*vas_tr(j-1)%width.GT.vas_tr(j-1)%b**2/2.d0*1.d11)THEN
+                            CYCLE
+                         END IF
+                      END IF
                       CALL achillestp(vas_tr(j-1),siglim,typ,   &
-                           &                iunwarn,iunnew,va_tracemin,niter,fals_conv,fals_notp,deltasig)
+                           &                iunwarn,iunnew,va_tracemin,niter,fals_conv,fals_notp,deltasig,limit_stretch)
                    ELSEIF(dr2ds(j).gt.0.d0)THEN
                       CALL achillestp(vas_tr(j),siglim,typ,     &
-                           &                iunwarn,iunnew,va_tracemin,niter,fals_conv,fals_notp,deltasig)
+                           &                iunwarn,iunnew,va_tracemin,niter,fals_conv,fals_notp,deltasig,limit_stretch)
                    ELSE 
                       WRITE(iunnew,*)' case not understood ', typ 
                    ENDIF
@@ -888,10 +918,16 @@ CONTAINS
                            &                   no_risk,iunnew,iunwarn,RISKFILE=riskfile,RISKESAFILE=riskesafile)
                    ENDIF
                 ELSEIF(typ.eq.'ENTADES')THEN 
+                   IF(limit_stretch.GT.0.d0)THEN
+                      IF(vas_tr(j-1)%stretch.GT.limit_stretch .OR. &
+                           & vas_tr(j-1)%stretch*vas_tr(j-1)%width.GT.vas_tr(j-1)%b**2/2.d0*1.d11)THEN
+                         CYCLE
+                      END IF
+                   END IF
                    ! look for first minimum
                    siglim=deltasig/2.d0 
                    CALL achillestp(vas_tr(j-1),siglim,typ,      &
-                        &                iunwarn,iunnew,va_tracemin,niter,fals_conv,fals_notp,deltasig)
+                        &                iunwarn,iunnew,va_tracemin,niter,fals_conv,fals_notp,deltasig,limit_stretch)
                    IF(fals_notp)THEN 
                       !                      WRITE(iunnew,*)' achillestp no TP ',typ 
                    ELSE 
@@ -904,7 +940,7 @@ CONTAINS
                    ! look for last minimum
                    siglim=deltasig/2.d0 
                    CALL achillestp(vas_tr(j),siglim,typ,        &
-                        &                iunwarn,iunnew,va_tracemin,niter,fals_conv,fals_notp,deltasig)
+                        &                iunwarn,iunnew,va_tracemin,niter,fals_conv,fals_notp,deltasig,limit_stretch)
                    IF(fals_notp)THEN 
                       !                      WRITE(iunnew,*)' achillestp no TP ',typ 
                    ELSE 
@@ -1029,7 +1065,7 @@ CONTAINS
   END SUBROUTINE falslog4tp
   !===================================================================================
   SUBROUTINE achillestp(va_trace,siglim,type,                  &
-       &     iunwar0,iunnew0,va_tracemin,niter,fals_conv,fals_notp,deltasig) 
+       &     iunwar0,iunnew0,va_tracemin,niter,fals_conv,fals_notp,deltasig,limit_stretch) 
     USE output_control            
     !========================== INPUT================================
     TYPE(tp_point), INTENT(IN) :: va_trace
@@ -1037,6 +1073,7 @@ CONTAINS
     CHARACTER(LEN=7), INTENT(INOUT) :: type 
     INTEGER, INTENT(IN) :: iunwar0,iunnew0 
     DOUBLE PRECISION, INTENT(IN) :: deltasig
+    DOUBLE PRECISION, INTENT(IN) :: limit_stretch
     !========================== OUTPUT===============================     
     TYPE(tp_point), INTENT(OUT) :: va_tracemin                
     LOGICAL, INTENT(OUT) :: fals_notp,fals_conv 
@@ -1141,7 +1178,20 @@ CONTAINS
              fals_conv=.true. 
              RETURN 
           ELSE 
-             ! see if possible to switch to falsi                                    
+             !------------------------------------!
+             ! See if possible to switch to falsi !
+             !------------------------------------!
+             ! If limit_stretch is not 0, check ar(nn+1)%stretch
+             IF(limit_stretch.GT.0.d0)THEN
+                IF(ar(nn+1)%stretch.GT.limit_stretch .OR. &
+                     ar(nn+1)%stretch*ar(nn+1)%width.GT.ar(nn+1)%b**2/2.d0*1.d11)THEN
+                   niter       = nn
+                   fals_conv   = .FALSE.
+                   va_tracemin = ar(nn+1) 
+                   WRITE(*,*) ' achillestp: stretching exceeds max value'
+                   RETURN
+                END IF
+             END IF
              IF(xx(nn).lt.xx(nn+1))THEN 
                 IF(ar(nn)%dd2_ds.lt.0.d0.and.ar(nn+1)%dd2_ds.gt.0.d0)THEN 
                    WRITE(iunwar,*)' achillestp: minimum identified' 
@@ -1254,6 +1304,7 @@ CONTAINS
     CHARACTER(LEN=4) :: method 
     INTEGER          :: i, npset, iunwar, iunnew
     DOUBLE PRECISION  :: b_e,vsize,v,mu
+    REAL(KIND=qkind) :: fbb,faa,aa,bb,xx
     !=========================================================================
     iunwar=abs(iunwar0)
     iunnew=abs(iunnew0) 

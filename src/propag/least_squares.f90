@@ -588,13 +588,6 @@ CONTAINS
     !  COVARIANCE (AND NORMAL MATRIX) COMPUTATION AND RESCALING  !
     !############################################################!
     CALL min_sol(obs_s,obsw_s,m,g,icor6,iun,uncert%c(1:nd,1:nd),deqv,uncert%g(1:nd,1:nd),csinor,indp,cond,nd)
-    !***************************************
-    !WRITE(*,*) 'FOURDIM FIT C6='
-    !DO i=1,6
-    !   WRITE(*,*) uncert%c(i,1:6)
-    !END DO
-    !STOP
-    !***************************************
     IF(indp.EQ.0) uncert%succ=succ
     uncert4%succ=succ
     uncert%ndim=nd ! If using this routine nd=6
@@ -1942,7 +1935,8 @@ CONTAINS
     DOUBLE PRECISION cov_small(nxinbl,nxinbl) !workspace normal blocks
     DOUBLE PRECISION cov_large(nxinbl_large,nxinbl_large) ! id. large blocks
     ! definition of blocks while observations are still sorted by time
-    IF(error_model_priv.ne.' '.and.error_model_priv.ne.'cbm10'.and.error_model_priv.ne.'fcct14') THEN
+    IF(error_model_priv.ne.' '.and.error_model_priv.ne.'cbm10'&
+         & .and.error_model_priv.ne.'fcct14'.and.error_model_priv.ne.'vfcc17') THEN
        CALL blockdef(obs,m)
        large_blk(1:nblk)=0
        nolarge=0
@@ -2215,7 +2209,8 @@ CONTAINS
           iposs3(iposs(ii))=kk
        ENDIF
     ENDDO
-    IF(error_model_priv.ne.' '.and.error_model_priv.ne.'cbm10'.and.error_model_priv.ne.'fcct14') THEN
+    IF(error_model_priv.ne.' '.and.error_model_priv.ne.'cbm10'&
+         & .and.error_model_priv.ne.'fcct14'.and.error_model_priv.ne.'vfcc17') THEN
        ! now reordering of the indirect address tables for blocks
        DO ibk=1,nblk
           DO j=1,noblk(ibk)
@@ -2405,7 +2400,8 @@ CONTAINS
        ENDIF
     ENDIF
     ! ===========================================================           
-    IF(error_model_priv.eq.' '.or.error_model_priv.eq.'cbm10'.or.error_model_priv.eq.'fcct14')THEN
+    IF(error_model_priv.eq.' '.or.error_model_priv.eq.'cbm10'.or.error_model_priv.eq.'fcct14' &
+         & .or.error_model_priv.eq.'vfcc17')THEN
        ! normal matrix GtWG of the pseudo-Newton method                        
        DO 1 j=1,nd                                                       
           DO 2 k=1,nd                                                     
@@ -2434,7 +2430,8 @@ CONTAINS
        ENDDO
        ! ===========================================================           
        ! with off-diagonal weights (if error_model is given)
-    ELSEIF(error_model_priv.ne.' '.and.error_model_priv.ne.'cbm10'.and.error_model_priv.ne.'fcct14')THEN
+    ELSEIF(error_model_priv.ne.' '.and.error_model_priv.ne.'cbm10'&
+         & .and.error_model_priv.ne.'fcct14'.and.error_model_priv.ne.'vfcc17')THEN
        ! start from scratch
        !     gtwcsi=0.d0                                      
        !     csinor=0.d0 
@@ -3221,11 +3218,13 @@ CONTAINS
        !         obs(j)%mag_band=col
        avail(j)=smag.ne.'      '.and.                              &
             & (col.eq.'B'.or.col.eq.'V'.or.col.eq.'R'.or.col.eq.'U'.or.col.eq.'J'.or. &
-            &  col.eq.'I'.or.col.eq.'C'.or.col.eq.'z'.or.col.eq.'i'.or.col.eq.'g'.or.&
-            &  col.eq.'G'.or.col.eq.'H'.or.col.eq.' '.or.col.eq.'r'.or.col.eq.'y'.or.col.eq.'w')    
+            &  col.eq.'I'.or.col.eq.'C'.or.col.eq.'z'.or.col.eq.'i'.or.col.eq.'g'.or. &
+            &  col.eq.'G'.or.col.eq.'H'.or.col.eq.' '.or.col.eq.'r'.or.col.eq.'y'.or. &
+            &  col.eq.'w'.or.col.eq.'K'.or.col.eq.'L'.or.col.eq.'Y'.or.col.eq.'c'.or.col.eq.'o'.or.col.eq.'u')
        IF(.not.(col.eq.'B'.or.col.eq.'V'.or.col.eq.'R'.or.col.eq.'U'.or.col.eq.'J'    &
             &   .or.col.eq.'I'.or.col.eq.'C'.or.col.eq.'z'.or.col.eq.'i'.or.col.eq.'g' &
-            &   .or.col.eq.'G'.or.col.eq.'H'.or.col.eq.' '.or.col.eq.'r'.or.col.eq.'y'.or.col.eq.'w'))THEN   
+            &   .or.col.eq.'G'.or.col.eq.'H'.or.col.eq.' '.or.col.eq.'r'.or.col.eq.'y' &
+            &   .or.col.eq.'w'.or.col.eq.'K'.or.col.eq.'L'.or.col.eq.'Y'.or.col.eq.'c'.or.col.eq.'o'.or.col.eq.'u'))THEN   
           IF(ierrou.gt.0)THEN 
              WRITE(ierrou,*) 'Unknown Color:',col,' Obs #',j 
              numerr=numerr+1 
@@ -3288,6 +3287,20 @@ CONTAINS
              obsm(j)=obsm(j)+0.16d0 
           ELSEIF(col.eq.'G')THEN 
              obsm(j)=obsm(j)+0.28d0 ! Gaia correction by Tholen
+          ELSEIF(col.eq.'c')THEN
+             obsm(j)=obsm(j)-0.05d0
+          ELSEIF(col.eq.'o')THEN
+             obsm(j)=obsm(j)+0.33d0
+          ELSEIF(col.eq.'L')THEN
+             obsm(j)=obsm(j)+0.2d0
+          ELSEIF(col.eq.'H')THEN
+             obsm(j)=obsm(j)+1.4d0
+          ELSEIF(col.eq.'K')THEN
+             obsm(j)=obsm(j)+1.7d0
+          ELSEIF(col.eq.'Y')THEN
+             obsm(j)=obsm(j)+0.7d0
+          ELSEIF(col.eq.'u')THEN
+             obsm(j)=obsm(j)+2.5d0
           ENDIF
        ENDIF
     ENDDO

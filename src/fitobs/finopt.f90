@@ -11,7 +11,7 @@ SUBROUTINE finopt(progna,run,astna0,astnap,error_model)
   USE fund_const
   USE astrometric_observations, ONLY: radius, ons_name
   USE offlov_checktp, ONLY: shrinkea
-  USE cobweb, ONLY: hmax,sigx,ndir,np,ndir2,np2
+  USE cobweb, ONLY: hmax,sigx,ndir,np,ndir2,np2,grid_lev_curve,propag_geoc_orbit
   USE dyn_param, ONLY : ngr_opt
   USE multi_store, ONLY : prob_sampl
   USE cla_store, ONLY : dmeacontr
@@ -89,18 +89,22 @@ SUBROUTINE finopt(progna,run,astna0,astnap,error_model)
   comment='error model file'
   CALL input_cha_opt(progna,'error_model',error_model,ireq,found,comment,iunout)
 ! =============FOR COBWEB ============================
-  comment='number of columns/directions'
+  comment='compute a grid for the level curves in case of cobweb'
+  CALL input_log_opt(progna,'grid_lev_curve',grid_lev_curve,ireq,found,comment,iunout)
+  comment='number of rho values at first iteration'
   CALL input_int_opt(progna,'cob_ndir',ndir,ireq,found,comment,iunout)
-  comment='number of rows/points in ray'
+  comment='number of rho_dot values at first iteration'
   CALL input_int_opt(progna,'cob_np',np,ireq,found,comment,iunout)
-  comment='number of columns/directions in the densified grid'
-  CALL input_int_opt(progna,'ndir_grid',ndir2,ireq,found,comment,iunout)
-  comment='number of rows/points in ray in the densified grid'
-  CALL input_int_opt(progna,'np_grid',np2,ireq,found,comment,iunout)
-  comment='sigma max in cobweb'
+  comment='number of rho values at second iteration (also for cobweb)'
+  CALL input_int_opt(progna,'cob_ndir2',ndir2,ireq,found,comment,iunout)
+  comment='number of rho_dot values at second iteration (also for cobweb)'
+  CALL input_int_opt(progna,'cob_np2',np2,ireq,found,comment,iunout)
+  comment='sigma max for cobweb'
   CALL input_rea_opt(progna,'cob_sigx',sigx,ireq,found,comment,iunout)
   comment='max absolute magnitude'
   CALL input_rea_opt(progna,'cob_hmax',hmax,ireq,found,comment,iunout)
+  comment='propag geocentric orbits'
+  CALL input_log_opt(progna,'propag_geoc_orbit',propag_geoc_orbit,ireq,found,comment,iunout)
 ! ======selection of target plane=====================
 !  tpplane is set to false in rmodel; true is default in fitobs
   tpplane=.true.

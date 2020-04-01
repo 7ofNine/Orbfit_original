@@ -27,7 +27,7 @@ MODULE cat_debias
        READ(iun,*)
        READ(iun,*)
 ! 19 catalogs times 4 fields
-    ELSEIF(error_model.eq.'fcct14')THEN
+    ELSEIF(error_model.EQ.'fcct14'.OR.error_model.EQ.'vfcc17')THEN
        CALL filopl(iun,'xcat.bias_fcct14')
        ALLOCATE(catrecord(49152,19*4))
        ! strip header, six lines
@@ -109,7 +109,7 @@ MODULE cat_debias
           pmDEC=catrecord((ipring+1),12)
           biasflag=.true.
        ENDIF
-    ELSEIF(error_model.eq.'fcct14')THEN
+    ELSEIF(error_model.EQ.'fcct14'.OR.error_model.EQ.'vfcc17')THEN
        SELECT CASE (catcodmpc)
        CASE('a')
 ! USNO-A1.0

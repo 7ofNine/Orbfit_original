@@ -1039,8 +1039,9 @@ SUBROUTINE wro1lh_matlab(unit,rsys,epoch,eltype)
 203  FORMAT('%',A,' Name, Epoch(MJD), a, e*sin(LP), e*cos(LP),',' tan(i/2)*sin(LN), tan(i/2)*cos(LN), mean long.')
   ELSEIF(eltype.EQ.'COM') THEN
      WRITE(unit,204) comcha 
-204  FORMAT('%',A,' Name, Epoch(MJD), q, e, i, long. node,',' arg. peric., perihelion time, H mag, NGR, chi, RMS,&
-          &connected component')
+204  FORMAT('%',A,'Name       Epoch(MJD)     a (AU)                   q (AU)                   e                        &
+          &i (deg)                  long. node (deg)         arg. peric. (deg)       peric. time  &
+          &H      NGR  chi          RMS         conn. comp.')
   ELSEIF(eltype.EQ.'COT') THEN
      WRITE(unit,205) comcha 
 205  FORMAT('%',A,' Name, Epoch(MJD), q, e, i, long. node,',' arg. peric., true anomaly')
