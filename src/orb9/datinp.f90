@@ -291,8 +291,8 @@
          END DO 
 ! header for selenocentric elements                                     
       ELSEIF (ihead.eq.2) then 
-         CALL reastr (1, 'coox', coox, commen,icom) 
-         CALL reastr (1, 'unitx', unitx, comme1,icom) 
+         !CALL reastr (1, 'coox', coox, commen,icom) 
+         !CALL reastr (1, 'unitx', unitx, comme1,icom) 
       WRITE ( * ,  * ) ' coordinates ', coox, '  ', commen 
       WRITE ( * ,  * ) ' units for angles ', unitx, '   ', comme1 
          ndat = - 6 ! trick: set ndat to - its value, to signal that there are

@@ -47,12 +47,12 @@
 ! *************************************************************         
 ! input  mode 
       inter=1                                                          
-      CALL prompt(' 1=interactive 0=from giffv.inp', inter, 0, 1) 
-      IF (inter.eq.0) then 
-         OPEN (4, file = 'giff.inp', status = 'unknown') 
-         WRITE ( * , * ) ' reading from file giff.inp' 
-         CALL skip (4, 1) 
-      ENDIF 
+!      CALL prompt(' 1=interactive 0=from giffv.inp', inter, 0, 1) 
+!      IF (inter.eq.0) then 
+!         OPEN (4, file = 'giff.inp', status = 'unknown') 
+!         WRITE ( * , * ) ' reading from file giff.inp' 
+!         CALL skip (4, 1) 
+!      ENDIF 
 ! *************************************************************         
 ! title                                                                 
       IF (inter.eq.0) then 

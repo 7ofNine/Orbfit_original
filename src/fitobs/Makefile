@@ -10,7 +10,7 @@ COPYING=stacop.o two_states.o
 
 FIDENT=identsub.o
 
-FINOUT=fitobs_interfaces.o finopt.o  
+FINOUT= fitobs_mod.o   fitobs_interfaces.o 
 
 FITOBS= fitobs.o  $(COPYING) $(FIDENT) $(FINOUT) twotes.o
 
@@ -25,8 +25,8 @@ catpro.x: catpro.o   $(LIBDEPS)
 	$(FC) $(FFLAGS) catpro.o  $(LIBDEPS) -o catpro.x
 
 depend:
-	../../bin/mkdep90 -I../include -L../suit -L../propag  *.f90 *.h90 > make.dep
-	../../bin/mkmoddep -f ../.compiler ../suit ../propag > modules.flags
+	../../bin/mkdep90 -I../include -L../suit -L../propag -L../prelim  *.f90 *.h90 > make.dep
+	../../bin/mkmoddep -f ../.compiler ../suit ../propag ../prelim > modules.flags
 
 clean:
 	rm -f *.x *.o *.mod *% *~ core* 

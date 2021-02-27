@@ -20,12 +20,14 @@
  not a designation default value  F
  second arc asteroid name default value= 
  error model file= fcct14
- number of columns/directions =           50
- number of rows/points in ray =           50
- number of columns/directions in the densified grid =          100
- number of rows/points in ray in the densified grid =          100
- sigma max in cobweb =    5.0000000000000000     
+ compute a grid for the level curves in case of cobweb is  F
+ number of rho values at first iteration =           50
+ number of rho_dot values at first iteration =           50
+ number of rho values at second iteration (also for cobweb) =          100
+ number of rho_dot values at second iteration (also for cobwe =          100
+ sigma max for cobweb =    5.0000000000000000     
  max absolute magnitude =    34.500000000000000     
+ propag geocentric orbits is  F
  use b-plane as target plane default value  T
  mass given in a separate file default value  F
  limit eccentricity =    1.9999000000000000     
@@ -54,31 +56,31 @@
   FULL DIFFERENTIAL CORRECTIONS
  starting values EQU
     1.162672965   -0.460663787    0.174881277    0.004551542    0.027004980    0.448785239    0.000000000    0.000000000
- Close approach to EARTH on 2014/04/01.38195 56748.38195 MJD at 0.10093073 AU.
- Close approach to VENUS on 2011/12/24.03906 55919.03906 MJD at 0.04300792 AU.
- Close approach to EARTH on 2010/10/24.62297 55493.62297 MJD at 0.07024719 AU.
- Close approach to EARTH on 2009/03/27.64993 54917.64993 MJD at 0.00417283 AU.
+ Close approach to EARTH on 2014/04/01.38195 56748.38195 MJD at 0.10093073 au
+ Close approach to VENUS on 2011/12/24.03906 55919.03906 MJD at 0.04300792 au
+ Close approach to EARTH on 2010/10/24.62297 55493.62297 MJD at 0.07024719 au
+ Close approach to EARTH on 2009/03/27.64993 54917.64993 MJD at 0.00417283 au
  difcor iteration   1
-  RMS residuals =  4.3353D-01   norm corr =  7.3960D-01
+  RMS residuals =  4.3352D-01   norm corr =  7.4232D-01
   new elem values
     1.1626730   -0.4606638    0.1748813    0.0045515    0.0270049    0.4487852
 
- nongrav   -1.7064800391520217E-005
- sigma(           7 )=   3.2391092767298287E-004
- Close approach to EARTH on 2014/04/01.38195 56748.38195 MJD at 0.10093075 AU.
- Close approach to VENUS on 2011/12/24.03906 55919.03906 MJD at 0.04300793 AU.
- Close approach to EARTH on 2010/10/24.62297 55493.62297 MJD at 0.07024716 AU.
- Close approach to EARTH on 2009/03/27.64993 54917.64993 MJD at 0.00417282 AU.
+ nongrav   -1.6981874622360893E-005
+ sigma(           7 )=   3.2391092767414422E-004
+ Close approach to EARTH on 2014/04/01.38195 56748.38195 MJD at 0.10093075 au
+ Close approach to VENUS on 2011/12/24.03906 55919.03906 MJD at 0.04300793 au
+ Close approach to EARTH on 2010/10/24.62297 55493.62297 MJD at 0.07024716 au
+ Close approach to EARTH on 2009/03/27.64993 54917.64993 MJD at 0.00417282 au
  difcor iteration   2
-  RMS residuals =  4.2589D-01   norm corr =  8.9625D-05
+  RMS residuals =  4.2582D-01   norm corr =  1.1835D-04
   new elem values
     1.1626730   -0.4606638    0.1748813    0.0045515    0.0270049    0.4487852
 
- nongrav   -1.7065413267172687E-005
- sigma(           7 )=   3.2391092754400802E-004
+ nongrav   -1.6982487740359308E-005
+ sigma(           7 )=   3.2391092753331833E-004
 ==== OUTLIER REJECTION =======
-Residual norm =  4.25887E-01
-Chi2 threshold =  1.11997E+00
+Residual norm =  4.25820E-01
+Chi2 threshold =  1.12027E+00
 No. of observations:
           total     =  292
           selected  =  292

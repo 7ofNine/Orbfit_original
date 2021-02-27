@@ -144,12 +144,13 @@
       CHARACTER*(*) iaudes,mpccod 
       LOGICAL error 
                                                                         
-      INTEGER ln,i,temp 
+      INTEGER ln,i,temp,permdes 
       CHARACTER*2 head 
       CHARACTER*3 tail 
                                                                         
       INTEGER lench 
-      LOGICAL isnum 
+      LOGICAL isnum
+      INTEGER numdes(4)
       EXTERNAL lench,isnum 
                                                                         
       CHARACTER numfield*5, desfield*12 
@@ -175,6 +176,13 @@
                   EXIT 
                ENDIF
             ENDDO
+         ELSEIF(numfield(1:1) .eq. '~') THEN
+            DO i=1,4
+               numdes(i)=ichar(numfield(i+1:i+1))-55
+               if (numdes(i).gt.35) numdes(i) = numdes(i) - 6
+            ENDDO
+            permdes=numdes(1)*62**3+numdes(2)*62**2+numdes(3)*62+numdes(4)+620000
+            WRITE(iaudes,"(i8)") permdes
          ELSE
 ! alphanumeric asteroid number
             temp=ichar(numfield(1:1))-55

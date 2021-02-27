@@ -38,21 +38,21 @@ CONTAINS
 ! (reference system: mean ecliptic and equinox J2000)
 ! Input can be either the observatory code (OBSCODE) or the BF coordinates of the point (BFPOS)
 ! The transformation can be done with higher precision if PRECISION=2 is selected (typically for radar observations)
-SUBROUTINE observer_position(tdt,position,velocity,obscode,bfpos,precision)
+SUBROUTINE observer_position(tdt,position,velocity,obscode,bfpos,precision,gast)
 USE station_coordinates
 USE iers_ser
 IMPLICIT NONE
 
-DOUBLE PRECISION,               INTENT(IN)           :: tdt          ! MJD TDT
-DOUBLE PRECISION, DIMENSION(3), INTENT(OUT)          :: position     ! Position vector
-DOUBLE PRECISION, DIMENSION(3), INTENT(OUT)          :: velocity     ! Velocity vector
-INTEGER,                        INTENT(IN), OPTIONAL :: obscode      ! Observatory code
-DOUBLE PRECISION, DIMENSION(3), INTENT(IN), OPTIONAL :: bfpos        ! Observatory BF position vector (au)
-INTEGER,                        INTENT(IN), OPTIONAL :: precision    ! Precision class (1=normal, 2=high precision)
-
+DOUBLE PRECISION,               INTENT(IN)            :: tdt          ! MJD TDT
+DOUBLE PRECISION, DIMENSION(3), INTENT(OUT)           :: position     ! Position vector
+DOUBLE PRECISION, DIMENSION(3), INTENT(OUT)           :: velocity     ! Velocity vector
+INTEGER,                        INTENT(IN), OPTIONAL  :: obscode      ! Observatory code
+DOUBLE PRECISION, DIMENSION(3), INTENT(IN), OPTIONAL  :: bfpos        ! Observatory BF position vector (au)
+INTEGER,                        INTENT(IN), OPTIONAL  :: precision    ! Precision class (1=normal, 2=high precision)
+DOUBLE PRECISION,               INTENT(OUT), OPTIONAL :: gast         ! Greenwich sidereal time
 CHARACTER(LEN=20)                :: name
 INTEGER                          :: mjd1,mjd2,prec
-DOUBLE PRECISION                 :: sec1,sec2,tut,gast
+DOUBLE PRECISION                 :: sec1,sec2,tut,gast2
 DOUBLE PRECISION, DIMENSION(3)   :: dxbf,dvbf,dxtod,dvtod
 DOUBLE PRECISION, DIMENSION(3,3) :: rot
 
@@ -77,22 +77,28 @@ ELSEIF(PRESENT(bfpos)) THEN
 ELSE
    STOP '**** observer_position1: internal error (02) ****'
 END IF
+
 ! ET decomposed in days plus seconds; no trick (every day is 86400 sec)
 mjd1=tdt
 sec1=(tdt-mjd1)*86400
+! Computation of UT1
+CALL cnvtim(mjd1,sec1,'ET ',mjd2,sec2,'UT1')
+tut=sec2/86400+mjd2
+! Greenwich Apparent Sidereal Time = Greenwich Mean Sidereal Time + Equation of the Equinoxes
+IF(PRESENT(gast)) gast=gmst(tut)+equequ(tdt)
 
 SELECT CASE (prec)
    CASE (1)
 
 ! Station velocity in the body fixed (equatorial) frame
       CALL prvec(omega_earth,dxbf,dvbf)
-! Computation of UT1
+      ! Computation of UT1
       CALL cnvtim(mjd1,sec1,'ET ',mjd2,sec2,'UT1')
       tut=sec2/86400+mjd2
 ! Greenwich Apparent Sidereal Time = Greenwich Mean Sidereal Time + Equation of the Equinoxes
-      gast=gmst(tut)+equequ(tdt)
+      gast2=gmst(tut)+equequ(tdt)
 ! Diurnal rotation matrix (transformation from body-fixed to true-of-date frames), neglecting polar motion
-      CALL rotmt(-gast,rot,3)
+      CALL rotmt(-gast2,rot,3)
       dxtod=MATMUL(rot,dxbf)
       dvtod=MATMUL(rot,dvbf)
 ! Station position and velocity in the J2000 (ecliptic) frame

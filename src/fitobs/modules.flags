@@ -1,2 +1,2 @@
-MODDEP= -I../suit -I../propag
+MODDEP= -I../suit -I../propag -I../prelim
 FFLAGS+=$(MODDEP)

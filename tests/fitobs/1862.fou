@@ -19,12 +19,14 @@
  not a designation default value  F
  second arc asteroid name default value= 
  error model file= fcct14
- number of columns/directions =           50
- number of rows/points in ray =           50
- number of columns/directions in the densified grid =          100
- number of rows/points in ray in the densified grid =          100
- sigma max in cobweb =    5.0000000000000000     
+ compute a grid for the level curves in case of cobweb is  F
+ number of rho values at first iteration =           50
+ number of rho_dot values at first iteration =           50
+ number of rho values at second iteration (also for cobweb) =          100
+ number of rho_dot values at second iteration (also for cobwe =          100
+ sigma max for cobweb =    5.0000000000000000     
  max absolute magnitude =    34.500000000000000     
+ propag geocentric orbits is  F
  use b-plane as target plane default value  T
  mass given in a separate file default value  F
  limit eccentricity =    1.9999000000000000     
@@ -53,41 +55,41 @@
   FULL DIFFERENTIAL CORRECTIONS
  starting values EQU
     1.470132728   -0.347997491    0.438628757    0.032422539    0.045038625    3.054251467    0.000000000    0.000000000
- Close approach to EARTH on 2007/05/08.63766 54228.63766 MJD at 0.07142143 AU.
- Close approach to EARTH on 2005/11/06.80205 53680.80205 MJD at 0.07524582 AU.
- Close approach to EARTH on 1982/05/14.71768 45103.71768 MJD at 0.05869832 AU.
- Close approach to EARTH on 1980/11/13.71900 44556.71900 MJD at 0.05548147 AU.
- Close approach to EARTH on 1966/05/02.12388 39247.12388 MJD at 0.18631969 AU.
- Close approach to EARTH on 1964/10/26.16023 38694.16023 MJD at 0.18543057 AU.
- Close approach to VENUS on 1950/06/26.65999 33458.65999 MJD at 0.00994700 AU.
- Close approach to EARTH on 1941/05/01.40569 30115.40569 MJD at 0.19845784 AU.
- Close approach to EARTH on 1932/05/15.16571 26842.16571 MJD at 0.07500268 AU.
+ Close approach to EARTH on 2007/05/08.63766 54228.63766 MJD at 0.07142143 au
+ Close approach to EARTH on 2005/11/06.80205 53680.80205 MJD at 0.07524582 au
+ Close approach to EARTH on 1982/05/14.71768 45103.71768 MJD at 0.05869832 au
+ Close approach to EARTH on 1980/11/13.71900 44556.71900 MJD at 0.05548147 au
+ Close approach to EARTH on 1966/05/02.12388 39247.12388 MJD at 0.18631969 au
+ Close approach to EARTH on 1964/10/26.16023 38694.16023 MJD at 0.18543057 au
+ Close approach to VENUS on 1950/06/26.65999 33458.65999 MJD at 0.00994700 au
+ Close approach to EARTH on 1941/05/01.40569 30115.40569 MJD at 0.19845784 au
+ Close approach to EARTH on 1932/05/15.16571 26842.16571 MJD at 0.07500268 au
  difcor iteration   1
   RMS residuals =  2.9204D+00   norm corr =  5.6845D+01
   new elem values
     1.4701327   -0.3479975    0.4386287    0.0324225    0.0450386    3.0542516
 
- nongrav   -3.5432804433439087E-005
- sigma(           7 )=   4.5804956454584047E-006
- Close approach to EARTH on 2007/05/08.63764 54228.63764 MJD at 0.07142177 AU.
- Close approach to EARTH on 2005/11/06.80202 53680.80202 MJD at 0.07524603 AU.
- Close approach to EARTH on 1982/05/14.71766 45103.71766 MJD at 0.05869806 AU.
- Close approach to EARTH on 1980/11/13.71898 44556.71898 MJD at 0.05548136 AU.
- Close approach to EARTH on 1966/05/02.12388 39247.12388 MJD at 0.18631973 AU.
- Close approach to EARTH on 1964/10/26.16023 38694.16023 MJD at 0.18543046 AU.
- Close approach to VENUS on 1950/06/26.65997 33458.65997 MJD at 0.00994702 AU.
- Close approach to EARTH on 1941/05/01.40571 30115.40571 MJD at 0.19845744 AU.
- Close approach to EARTH on 1932/05/15.16576 26842.16576 MJD at 0.07500338 AU.
+ nongrav   -3.5429685675712432E-005
+ sigma(           7 )=   4.5804956473405831E-006
+ Close approach to EARTH on 2007/05/08.63764 54228.63764 MJD at 0.07142177 au
+ Close approach to EARTH on 2005/11/06.80202 53680.80202 MJD at 0.07524603 au
+ Close approach to EARTH on 1982/05/14.71766 45103.71766 MJD at 0.05869806 au
+ Close approach to EARTH on 1980/11/13.71898 44556.71898 MJD at 0.05548136 au
+ Close approach to EARTH on 1966/05/02.12388 39247.12388 MJD at 0.18631973 au
+ Close approach to EARTH on 1964/10/26.16023 38694.16023 MJD at 0.18543046 au
+ Close approach to VENUS on 1950/06/26.65997 33458.65997 MJD at 0.00994702 au
+ Close approach to EARTH on 1941/05/01.40571 30115.40571 MJD at 0.19845744 au
+ Close approach to EARTH on 1932/05/15.16576 26842.16576 MJD at 0.07500338 au
  difcor iteration   2
-  RMS residuals =  5.7450D-01   norm corr =  7.9892D-03
+  RMS residuals =  5.7450D-01   norm corr =  8.0248D-03
   new elem values
     1.4701327   -0.3479975    0.4386287    0.0324225    0.0450386    3.0542516
 
- nongrav   -3.5449187461264121E-005
- sigma(           7 )=   4.5805305253853747E-006
+ nongrav   -3.5446072572214100E-005
+ sigma(           7 )=   4.5805305240157182E-006
 ==== OUTLIER REJECTION =======
-Residual norm =  5.74499E-01
-Chi2 threshold =  2.33691E+00
+Residual norm =  5.74504E-01
+Chi2 threshold =  2.33690E+00
 No. of observations:
           total     = 1408
           selected  = 1388
@@ -96,16 +98,16 @@ No. of observations:
 Outlier rejection pass   1 after   2 single differential correction passes.
 There were   0 changes.
  Final convergence loop after            1  outlier rejection loops.
- Close approach to EARTH on 2007/05/08.63764 54228.63764 MJD at 0.07142177 AU.
- Close approach to EARTH on 2005/11/06.80202 53680.80202 MJD at 0.07524603 AU.
- Close approach to EARTH on 1982/05/14.71766 45103.71766 MJD at 0.05869806 AU.
- Close approach to EARTH on 1980/11/13.71898 44556.71898 MJD at 0.05548136 AU.
- Close approach to EARTH on 1966/05/02.12388 39247.12388 MJD at 0.18631973 AU.
- Close approach to EARTH on 1964/10/26.16026 38694.16026 MJD at 0.18543046 AU.
- Close approach to VENUS on 1950/06/26.65997 33458.65997 MJD at 0.00994702 AU.
- Close approach to EARTH on 1941/05/01.40571 30115.40571 MJD at 0.19845745 AU.
- Close approach to EARTH on 1932/05/15.16576 26842.16576 MJD at 0.07500337 AU.
- done difcor iter.   1  RMS =  5.7450D-01 last corr. =  9.6974D-05
+ Close approach to EARTH on 2007/05/08.63764 54228.63764 MJD at 0.07142177 au
+ Close approach to EARTH on 2005/11/06.80202 53680.80202 MJD at 0.07524603 au
+ Close approach to EARTH on 1982/05/14.71766 45103.71766 MJD at 0.05869806 au
+ Close approach to EARTH on 1980/11/13.71898 44556.71898 MJD at 0.05548136 au
+ Close approach to EARTH on 1966/05/02.12388 39247.12388 MJD at 0.18631973 au
+ Close approach to EARTH on 1964/10/26.16026 38694.16026 MJD at 0.18543046 au
+ Close approach to VENUS on 1950/06/26.65997 33458.65997 MJD at 0.00994702 au
+ Close approach to EARTH on 1941/05/01.40571 30115.40571 MJD at 0.19845745 au
+ Close approach to EARTH on 1932/05/15.16576 26842.16576 MJD at 0.07500337 au
+ done difcor iter.   1  RMS =  5.7450D-01 last corr. =  8.2510D-05
  Done. Corrections small after            1  passes.
  WARNING: Did not finish rejecting photometry...
 Absol Magnitude: Old=16.06 New=16.06

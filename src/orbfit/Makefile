@@ -6,7 +6,7 @@ all: orbfit.x
 # Auxiliary routines (internal to orbfit)
 ORBAUX=ofod.o rdopt_of.o srtobs.o seltid.o ustsp.o ofclrf.o
 
-ORBFIT=$(ORBAUX) orbfit.o 
+ORBFIT=$(ORBAUX) orbfit.o
 
 ORBFITDEPS=$(ORBFIT) ../lib/libprop.a ../lib/libmoid.a ../lib/libgauss.a ../lib/libsuit.a
 

@@ -271,7 +271,7 @@ CONTAINS
     LOGICAL :: errnor
 ! ===================================================================== 
 ! inizialization of the variable tp
-    CALL undefined_tp_point(nd,tp)
+    !CALL undefined_tp_point(nd,tp)
 ! derivative are required: select first minimum always                  
     IF(njc.eq.0)THEN 
 ! close approach ended, but closest approach not recorded; initial close

@@ -7,3 +7,14 @@
 /EWS/*
 /junit-workspace/*
 /lib/jpleph
+/src/.metadata
+/src/fitobs/.cproject
+/src/fitobs/.project
+/src/fitobs/.settings/org.eclipse.cdt.core.prefs
+/src/include/.cproject
+/src/include/.project
+/src/orbfit/.cproject
+/src/orbfit/.project
+*.cproject
+*.project
+*.settings

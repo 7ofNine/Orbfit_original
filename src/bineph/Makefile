@@ -9,7 +9,6 @@ BINEPH=bineph2.o
 
 LIBDEPS= ../lib/libprop.a ../lib/libmoid.a ../lib/libgauss.a ../lib/libsuit.a
 
-
 bineph.x: $(BINEPH) $(LIBDEPS)
 	$(FC) $(FFLAGS) -o bineph.x $(BINEPH) $(LIBDEPS)
 

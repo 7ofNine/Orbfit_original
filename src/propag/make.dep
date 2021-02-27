@@ -35,6 +35,7 @@ cobweb.o: \
 	../suit/fund_const.mod \
 	../suit/name_rules.mod \
 	../suit/output_control.mod \
+	../suit/planet_masses.mod \
 	../suit/station_coordinates.mod \
 	../suit/triangles.mod \
 	arc_control.o \
@@ -144,6 +145,7 @@ laplace_poincare.o: \
 
 least_squares.o: \
 	../include/parobx.h90 \
+	../suit/ades.mod \
 	../suit/astrometric_observations.mod \
 	../suit/fund_const.mod \
 	../suit/name_rules.mod \

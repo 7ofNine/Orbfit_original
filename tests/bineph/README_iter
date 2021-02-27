@@ -18,7 +18,7 @@ MANUALLY
    (scp -p astdys2@hamilton.dm.unipi.it:~/database/data/epoch/numbered/0/4.eq0 .)
 
 3) Run bineph.x using CPV_noiter.bop (see README_bineph to create the file CPV.inc)
-   (ln -s CPV_noiter.bop CPV.bop)
+   (ln -s CPV_noiter.bop.orig CPV.bop)
    This creates the two initial files CPV.bai and CPV.bep.
 
 AUTOMATICALLY

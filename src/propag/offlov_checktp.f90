@@ -368,6 +368,10 @@ SUBROUTINE riskchecktp(va_tracemin,t0,type,no_risk,   &
   CHARACTER (LEN=17):: impactdate
   INTEGER           :: ts
   INTEGER           :: bad_cond ! Flag for bad conditioning case
+  DOUBLE PRECISION  :: diff_ts,cur_time
+  INTEGER           :: curr_hour
+  INTEGER           :: date_values(8)
+  DOUBLE PRECISION, EXTERNAL :: tjm1
 ! ==========================================================================
   dcur=va_tracemin%b 
   width=va_tracemin%width 
@@ -493,9 +497,21 @@ SUBROUTINE riskchecktp(va_tracemin,t0,type,no_risk,   &
            OPEN(UNIT=iunesarisk, FILE=riskesafile(1:lee),POSITION='APPEND')
         END IF
         IF(iunrisk1.le.0) CALL header_risk(0)
-! storing corresponding vi
+        ! storing corresponding vi
         CALL store_vi()
-        ts=torino(p_imp1,(e_tilde/p_imp1))
+        !------------!
+        ! Compute TS !
+        !------------!
+        CALL DATE_AND_TIME(VALUES=date_values)
+        curr_hour = date_values(5)+(date_values(6)+date_values(7)/60.d0)/60.d0
+        cur_time  = tjm1(date_values(3),date_values(2),date_values(1),curr_hour)
+        diff_ts = ABS(tcl-cur_time)/365.25d0
+        IF(diff_ts.LT.100.d0)THEN
+           ts=torino(p_imp,(e_tilde/p_imp))
+        ELSE
+           ts=-1
+        END IF
+        ! Write .esa_risk
         IF(PRESENT(riskesafile))THEN
            WRITE(iunesarisk,50) impactdate,p_imp1,ps,ts, v_imp
 50         FORMAT(a17,2X,1p,e9.2,4X,0p,f6.2,5X,I2,6X,f7.2)

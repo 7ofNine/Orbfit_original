@@ -19,12 +19,14 @@
  not a designation default value  F
  second arc asteroid name default value= 
  error model file= fcct14
- number of columns/directions =           50
- number of rows/points in ray =           50
- number of columns/directions in the densified grid =          100
- number of rows/points in ray in the densified grid =          100
- sigma max in cobweb =    5.0000000000000000     
+ compute a grid for the level curves in case of cobweb is  F
+ number of rho values at first iteration =           50
+ number of rho_dot values at first iteration =           50
+ number of rho values at second iteration (also for cobweb) =          100
+ number of rho_dot values at second iteration (also for cobwe =          100
+ sigma max for cobweb =    5.0000000000000000     
  max absolute magnitude =    34.500000000000000     
+ propag geocentric orbits is  F
  use b-plane as target plane default value  T
  mass given in a separate file default value  F
  limit eccentricity =    1.9999000000000000     
@@ -53,35 +55,35 @@
   FULL DIFFERENTIAL CORRECTIONS
  starting values EQU
     1.007210968    0.006322449   -0.040167280    0.002870261    0.001754936    0.740382579    0.000000000    0.000000000
- Close approach to EARTH on 2010/05/07.79448 55323.79448 MJD at 0.02349123 AU.
- Close approach to EARTH on 2010/07/12.09477 55389.09477 MJD at 0.02722789 AU.
- Close approach to EARTH on 2011/06/02.03602 55714.03602 MJD at 0.00231325 AU.
- Close approach to EARTH on 2009/10/20.74863 55124.74863 MJD at 0.04438087 AU.
- Close approach to EARTH on 2009/01/25.26773 54856.26773 MJD at 0.00458746 AU.
+ Close approach to EARTH on 2010/05/07.79448 55323.79448 MJD at 0.02349123 au
+ Close approach to EARTH on 2010/07/12.09477 55389.09477 MJD at 0.02722789 au
+ Close approach to EARTH on 2011/06/02.03602 55714.03602 MJD at 0.00231325 au
+ Close approach to EARTH on 2009/10/20.74863 55124.74863 MJD at 0.04438087 au
+ Close approach to EARTH on 2009/01/25.26778 54856.26778 MJD at 0.00458746 au
  difcor iteration   1
-  RMS residuals =  1.3330D+00   norm corr =  8.5643D+00
+  RMS residuals =  1.3332D+00   norm corr =  8.5653D+00
   new elem values
     1.0072105    0.0063223   -0.0401672    0.0028703    0.0017549    0.7403835
 
- nongrav   0.24217592884393557       -1.1552060532416752E-002
- sigma(           7 )=   4.1125375530354877E-002
- sigma(           8 )=   1.3524265631352319E-003
- Close approach to EARTH on 2010/05/07.79144 55323.79144 MJD at 0.02349188 AU.
- Close approach to EARTH on 2010/07/12.09829 55389.09829 MJD at 0.02722881 AU.
- Close approach to EARTH on 2011/06/02.03602 55714.03602 MJD at 0.00231326 AU.
- Close approach to EARTH on 2009/10/20.74945 55124.74945 MJD at 0.04438021 AU.
- Close approach to EARTH on 2009/01/25.26772 54856.26772 MJD at 0.00458747 AU.
+ nongrav   0.24202879178357328       -1.1546865943697804E-002
+ sigma(           7 )=   4.1125376729000344E-002
+ sigma(           8 )=   1.3524266125170485E-003
+ Close approach to EARTH on 2010/05/07.79144 55323.79144 MJD at 0.02349188 au
+ Close approach to EARTH on 2010/07/12.09829 55389.09829 MJD at 0.02722881 au
+ Close approach to EARTH on 2011/06/02.03602 55714.03602 MJD at 0.00231326 au
+ Close approach to EARTH on 2009/10/20.74945 55124.74945 MJD at 0.04438021 au
+ Close approach to EARTH on 2009/01/25.26772 54856.26772 MJD at 0.00458747 au
  difcor iteration   2
-  RMS residuals =  4.4683D-01   norm corr =  4.9144D-02
+  RMS residuals =  4.4679D-01   norm corr =  4.9130D-02
   new elem values
     1.0072105    0.0063223   -0.0401672    0.0028703    0.0017549    0.7403835
 
- nongrav   0.24212014648827510       -1.1548959597613054E-002
- sigma(           7 )=   4.1125936242791525E-002
- sigma(           8 )=   1.3520706185405280E-003
+ nongrav   0.24197296029775855       -1.1543766889580104E-002
+ sigma(           7 )=   4.1125937338802154E-002
+ sigma(           8 )=   1.3520707233936459E-003
 ==== OUTLIER REJECTION =======
-Residual norm =  4.46834E-01
-Chi2 threshold =  1.91343E+00
+Residual norm =  4.46791E-01
+Chi2 threshold =  1.91372E+00
 No. of observations:
           total     =  190
           selected  =  186
@@ -90,12 +92,12 @@ No. of observations:
 Outlier rejection pass   1 after   2 single differential correction passes.
 There were   0 changes.
  Final convergence loop after            1  outlier rejection loops.
- Close approach to EARTH on 2010/05/07.79144 55323.79144 MJD at 0.02349188 AU.
- Close approach to EARTH on 2010/07/12.09829 55389.09829 MJD at 0.02722881 AU.
- Close approach to EARTH on 2011/06/02.03602 55714.03602 MJD at 0.00231326 AU.
- Close approach to EARTH on 2009/10/20.74945 55124.74945 MJD at 0.04438021 AU.
- Close approach to EARTH on 2009/01/25.26772 54856.26772 MJD at 0.00458747 AU.
- done difcor iter.   1  RMS =  4.4678D-01 last corr. =  1.9666D-05
+ Close approach to EARTH on 2010/05/07.79144 55323.79144 MJD at 0.02349188 au
+ Close approach to EARTH on 2010/07/12.09829 55389.09829 MJD at 0.02722881 au
+ Close approach to EARTH on 2011/06/02.03602 55714.03602 MJD at 0.00231326 au
+ Close approach to EARTH on 2009/10/20.74945 55124.74945 MJD at 0.04438021 au
+ Close approach to EARTH on 2009/01/25.26772 54856.26772 MJD at 0.00458747 au
+ done difcor iter.   1  RMS =  4.4673D-01 last corr. =  2.2928D-05
  Done. Corrections small after            1  passes.
 Absol Magnitude: Old=28.24 New=28.24
 no. magnitude obs.= 163 with RMS  0.57

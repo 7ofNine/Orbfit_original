@@ -37,7 +37,7 @@ MOIDRMS= dnod_amoid_rms_com.o
 DES=des_routines5.o 
 
 libquamia:
-	cd quadp; make
+	cd quadp; mingw32-make
 
 ../lib/libprop.a: $(PROP) $(DIFCOR) $(PUB) $(CLOAP) $(ORBEL) $(SAT) $(ORB9) $(DES) libquamia
 	ar r ../lib/libprop.a $(PROP) $(DIFCOR) $(PUB) $(CLOAP) $(QUADP) $(ORBEL) $(SAT) $(ORB9) $(DES)

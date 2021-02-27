@@ -6,8 +6,19 @@ Prerequisits:
 1) set up msys2 64 bit http://www.msys2.org/ 
    - install as described above and update as described on the website above. This should always be done in the MSYS2 command prompt
    - add packages 
-	base-devel
+	base-devel , we actually need fortran and make. Not the complete toolchain
 	mingw-w64-x86_64-toolchain
+	
+	finding a package. partial specification works
+	pacman -Ss <name or part of the name of the package> 
+	 
+	e.g.: pacman -Ss x86_64-perl 
+	
+	we need perl for mkdep90 and mkdepmodul. they are perl scripts in bin
+	
+	installing a package
+	pacman -S <name of the package>
+	
      using  pacman --needed -Syu <packagename> 
      
      until done. The prompts will tell if something is todo.
@@ -16,5 +27,10 @@ Prerequisits:
      In Eclipse  Preferences -> C/C++ -> Build -> Environment add Variable PATH:<msys64>\usr\bin (this makes it find your make)
      
 
+creating a project in eclipse.
+Create Fortran project Executable gnu fortran on windows
+import file system 
+select folder to import (the project folder)
+folder to be set the same as source folder
+advanced: create link. Tis should create a link to the src folder but without copying the files int the workspace, i.e. the files should not be linked!!
 
-	

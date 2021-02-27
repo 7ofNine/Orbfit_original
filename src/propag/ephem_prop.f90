@@ -379,7 +379,7 @@ SUBROUTINE ephemc(unit,el0,unc0,defcov,t1,t2,dt,idsta,scale,fields,unitmax,mjdca
   CHARACTER*3 cmonth(12) 
   CHARACTER*20 field(nfx),frameo,amuni,amunid,amfor 
   CHARACTER*(lrx) head1,head2,head3,head4,outrec,recv(nephx),blank,maxrec 
-  CHARACTER cval*80 
+  CHARACTER cval*80,minstr*2 
   LOGICAL outmot,outerr,outmag,oldrst,found,fail1,fail,usexp 
 ! Time conversion (added by Steve Chesley)                              
   INTEGER mjdt,mjdout 
@@ -387,9 +387,11 @@ SUBROUTINE ephemc(unit,el0,unc0,defcov,t1,t2,dt,idsta,scale,fields,unitmax,mjdca
   DOUBLE PRECISION :: adot,ddot ! proper motion
 ! phase, distance to Earth, distance to Sun, solar elongation, galactit lat. and longitude, 
 ! elevation, elevation sun, lunar elongation
-  DOUBLE PRECISION :: pha,dis,dsun,elo,gallat,gallon,elev,elsun, elmoon 
-  INTEGER lench, ieph
+  DOUBLE PRECISION :: pha,dis,dsun,elo,gallat,gallon,elev,azimuth,elsun, elmoon, phamoon 
+  INTEGER lench, ieph, hourint, minutes
   LOGICAL sub_ast_station_light, umbra, penumbra,max_bright_exist,forw_skip
+  CHARACTER*5 :: saaux
+  CHARACTER*4 :: sdaux
   EXTERNAL lench 
                                                                         
   DATA cmonth/'Jan','Feb','Mar','Apr','May','Jun',                  &
@@ -441,6 +443,13 @@ SUBROUTINE ephemc(unit,el0,unc0,defcov,t1,t2,dt,idsta,scale,fields,unitmax,mjdca
         WRITE(head3(lh+1:),300) scale(1:ls) 
         head4(lh+1:)=' =========== ======' 
         lh=lh+19 
+     ELSEIF(field(i).EQ.'cal2') THEN 
+        head1(lh+1:)=blank 
+        head2(lh+1:)='    Date      Hour' 
+        ls=lench(scale) 
+        WRITE(head3(lh+1:),300) scale(1:ls) 
+        head4(lh+1:)=' =========== =====' 
+        lh=lh+18 
      ELSEIF(field(i).EQ.'mjd') THEN 
         head1(lh+1:)=blank 
         head2(lh+1:)='     MJD     ' 
@@ -462,7 +471,22 @@ SUBROUTINE ephemc(unit,el0,unc0,defcov,t1,t2,dt,idsta,scale,fields,unitmax,mjdca
         END IF
         head3(lh+1:)='    h  m  s        d  ''  "   ' 
         head4(lh+1:)='  =============  ============' 
-        lh=lh+29 
+        lh=lh+29
+     ELSEIF(field(i).EQ.'coord2') THEN
+        IF(frameo.EQ.'EQUATORIAL') THEN
+           head1(lh+1:)='     Equatorial coordinates  '
+           head2(lh+1:)='       RA            DEC     '
+        ELSEIF(frameo.EQ.'ECLIPTICAL') THEN
+           head1(lh+1:)='      Ecliptic coordinates   '
+           head2(lh+1:)='    Longitude      Latitude  '
+        ELSE
+           lf=lench(frameo)
+           WRITE(*,331) frameo(1:lf)
+           STOP '**** ephemc: Abnormal end ****'
+        END IF
+        head3(lh+1:)='    degrees        degrees    '
+        head4(lh+1:)='  ============= ============='
+        lh=lh+29
      ELSEIF(field(i).EQ.'delta') THEN 
         head1(lh+1:)=blank 
         head2(lh+1:)='  Delta ' 
@@ -501,7 +525,7 @@ SUBROUTINE ephemc(unit,el0,unc0,defcov,t1,t2,dt,idsta,scale,fields,unitmax,mjdca
         lh=lh+7 
      ELSEIF(field(i).EQ.'mooel') THEN 
         head1(lh+1:)=blank 
-        head2(lh+1:)='  LunEl' 
+        head2(lh+1:)=' Lun.El' 
         head3(lh+1:)='  (deg)' 
         head4(lh+1:)=' ======' 
         lh=lh+7 
@@ -511,6 +535,12 @@ SUBROUTINE ephemc(unit,el0,unc0,defcov,t1,t2,dt,idsta,scale,fields,unitmax,mjdca
         head3(lh+1:)='  (deg)' 
         head4(lh+1:)=' ======' 
         lh=lh+7 
+     ELSEIF(field(i).EQ.'moonphase') THEN
+        head1(lh+1:)=blank
+        head2(lh+1:)=' Lun.Ph'
+        head3(lh+1:)='  (deg)'
+        head4(lh+1:)=' ======'
+        lh=lh+7
      ELSEIF(field(i).EQ.'sub_ast_l') THEN 
         head1(lh+1:)=blank 
         head2(lh+1:)='  S-A L. ' 
@@ -562,6 +592,12 @@ SUBROUTINE ephemc(unit,el0,unc0,defcov,t1,t2,dt,idsta,scale,fields,unitmax,mjdca
         head3(lh+1:)=' (deg)' 
         head4(lh+1:)=' =====' 
         lh=lh+6 
+     ELSEIF(field(i).EQ.'azimuth') THEN 
+        head1(lh+1:)=blank 
+        head2(lh+1:)='  Azi. ' 
+        head3(lh+1:)=' (deg) ' 
+        head4(lh+1:)=' ======' 
+        lh=lh+6 
      ELSEIF(field(i).EQ.'airm') THEN 
         head1(lh+1:)=blank 
         head2(lh+1:)=' Airmass ' 
@@ -589,6 +625,16 @@ SUBROUTINE ephemc(unit,el0,unc0,defcov,t1,t2,dt,idsta,scale,fields,unitmax,mjdca
            head3(lh+1:)='     Err1      Err2    PA ' 
            head4(lh+1:)='  ========  ======== =====' 
            lh=lh+26 
+        END IF
+     ELSEIF(field(i).EQ.'skyerr2') THEN
+        IF(defcov) THEN
+           outerr=.true.
+           ider=1
+           head1(lh+1:)=blank
+           head2(lh+1:)='     Sky plane error (deg)    '
+           head3(lh+1:)='       Err1        Err2    PA '
+           head4(lh+1:)='  ==========  ========== ====='
+           lh=lh+30
         END IF
      ELSEIF(field(i).EQ.'appmot') THEN 
         fail=.false. 
@@ -715,16 +761,16 @@ SUBROUTINE ephemc(unit,el0,unc0,defcov,t1,t2,dt,idsta,scale,fields,unitmax,mjdca
      &        alpha,delta,mag,inl,                                    &
      &        UNCERT=unc0,GAMAD=gamad,SIG=sig,AXES=axes,              &
      &        ADOT0=adot,DDOT0=ddot,DIS0=dis,PHA0=pha,DSUN0=dsun,     &
-     &        ELO0=elo,GALLAT0=gallat,ELEV0=elev,ELSUN0=elsun,        & 
+     &        ELO0=elo,GALLAT0=gallat,ELEV0=elev,AZIMUTH0=azimuth,ELSUN0=elsun,        & 
      &        ELMOON0=elmoon,GALLON0=gallon,SUB_AST_STATION_LIGHT0=sub_ast_station_light, &
-     &        UMBRA0=umbra,PENUMBRA0=penumbra)         
+     &        UMBRA0=umbra,PENUMBRA0=penumbra,PHAMOON0=phamoon)         
     ELSE 
         CALL predic_obs(el0,idsta,tdt,obstyp,  &
      &        alpha,delta,mag,inl,        &
      &        ADOT0=adot,DDOT0=ddot,DIS0=dis,PHA0=pha,DSUN0=dsun,   &
-     &        ELO0=elo,GALLAT0=gallat,ELEV0=elev,ELSUN0=elsun,   &
+     &        ELO0=elo,GALLAT0=gallat,ELEV0=elev,AZIMUTH0=azimuth,ELSUN0=elsun,   &
      &        ELMOON0=elmoon,GALLON0=gallon,SUB_AST_STATION_LIGHT0=sub_ast_station_light, &
-     &        UMBRA0=umbra,PENUMBRA0=penumbra)
+     &        UMBRA0=umbra,PENUMBRA0=penumbra,PHAMOON0=phamoon)
      END IF
 !     WRITE(unit,*)'FIX, KILL= ', fix_mole, kill_propag
      IF(fix_mole.and.kill_propag) THEN
@@ -761,6 +807,24 @@ SUBROUTINE ephemc(unit,el0,unc0,defcov,t1,t2,dt,idsta,scale,fields,unitmax,mjdca
   &        STOP '**** ephemc: internal error (02) ****'              
           WRITE(outrec(lr+1:),201) day,cmonth(month),year,hour 
           lr=lr+19 
+! Calendar date 2                                                         
+       ELSEIF(field(i).EQ.'cal2') THEN 
+          CALL mjddat(tout,day,month,year,hour) 
+          IF(month.LT.1 .OR. month.GT.12)                               &
+  &        STOP '**** ephemc: internal error (02) ****'              
+          hourint=int(hour)
+          minutes=nint((hour - hourint)*60)
+          IF(minutes.GE.60) THEN 
+             minutes = 0
+             hourint = hourint + 1
+          ENDIF
+          IF(minutes.GE.10) THEN
+             WRITE(minstr,"(I2)") minutes
+          ELSE
+                 WRITE(minstr,"(A1,I1)") "0",minutes
+          ENDIF
+           WRITE(outrec(lr+1:),219) day,cmonth(month),year,hourint,":",minstr 
+          lr=lr+18 
 ! Modified Julian Day                                                   
        ELSEIF(field(i).EQ.'mjd') THEN 
           WRITE(outrec(lr+1:),202) tout 
@@ -769,9 +833,17 @@ SUBROUTINE ephemc(unit,el0,unc0,defcov,t1,t2,dt,idsta,scale,fields,unitmax,mjdca
        ELSEIF(field(i).EQ.'coord') THEN 
           CALL sessag(alpha*hrad,siga,ia,ma,sa) 
           IF(siga.NE.'+') STOP '**** ephemc: internal error (03) ****' 
-          CALL sessag(delta*degrad,sigd,id,md,sd) 
-          WRITE(outrec(lr+1:),203) ia,ma,sa,sigd,id,md,sd 
+          CALL sessag(delta*degrad,sigd,id,md,sd)
+          ! Print seconds of alpha and delta with leading zeroes
+          WRITE(saaux,'(F5.3)') sa-INT(sa)
+          IF(sa-INT(sa).GE.0.9995d0) sa=sa+1.d0
+          WRITE(sdaux,'(F4.2)') sd-INT(sd)
+          IF(sd-INT(sd).GE.0.995d0) sd=sd+1.d0
+          WRITE(outrec(lr+1:),203) ia,ma,INT(sa),saaux(2:5),sigd,id,md,INT(sd),sdaux(2:4) 
           lr=lr+29 
+       ELSEIF(field(i).EQ.'coord2') THEN
+          WRITE(outrec(lr+1:),217)alpha*hrad,delta*degrad
+          lr=lr+29
 ! Distance from the Earth                                               
        ELSEIF(field(i).EQ.'delta') THEN 
           WRITE(outrec(lr+1:),204) dis 
@@ -804,11 +876,15 @@ SUBROUTINE ephemc(unit,el0,unc0,defcov,t1,t2,dt,idsta,scale,fields,unitmax,mjdca
        ELSEIF(field(i).EQ.'phase') THEN 
           WRITE(outrec(lr+1:),212) pha*degrad 
           lr=lr+7 
+! Moon phase angle
+       ELSEIF(field(i).EQ.'moonphase') THEN
+          WRITE(outrec(lr+1:),212) phamoon*degrad
+          lr=lr+7
 ! Magnitude                                                             
        ELSEIF(field(i).EQ.'mag') THEN 
           IF(outmag) THEN 
              WRITE(outrec(lr+1:),205) mag 
-             lr=lr+6 
+             lr=lr+6
           END IF
 ! Magnitude HP                                                            
        ELSEIF(field(i).EQ.'magHP') THEN 
@@ -839,14 +915,17 @@ SUBROUTINE ephemc(unit,el0,unc0,defcov,t1,t2,dt,idsta,scale,fields,unitmax,mjdca
           WRITE(outrec(lr+1:),214) sub_ast_station_light 
           lr=lr+9
 
-! Elevation and Airmass
+! Elevation,Azimuth and Airmass
        ELSEIF(field(i).EQ.'elev') THEN
           WRITE(outrec(lr+1:),205) elev*degrad
           lr=lr+6
-       ! Airmass calculation according Young (1994)
-         cosangzen=cos(pig/2-elev)
-         airmass=1.002432d0*cosangzen**2+0.148386d0*cosangzen+0.0096467d0
-         airmass=airmass/(cosangzen**3+0.149864d0*cosangzen**2+0.0102963d0*cosangzen+0.000303978)  
+          ! Airmass calculation according Young (1994)
+          cosangzen=cos(pig/2-elev)
+          airmass=1.002432d0*cosangzen**2+0.148386d0*cosangzen+0.0096467d0
+          airmass=airmass/(cosangzen**3+0.149864d0*cosangzen**2+0.0102963d0*cosangzen+0.000303978)  
+       ELSEIF(field(i).EQ.'azimuth') THEN
+          WRITE(outrec(lr+1:),205) azimuth*degrad
+          lr=lr+6
        ELSEIF(field(i).EQ.'airm') THEN
           IF(elev.gt.0)WRITE(outrec(lr+1:),209) airmass
           IF(elev.le.0)WRITE(outrec(lr+1:),211)'    INF  '
@@ -860,6 +939,7 @@ SUBROUTINE ephemc(unit,el0,unc0,defcov,t1,t2,dt,idsta,scale,fields,unitmax,mjdca
 ! from right to left                                                    
 !             pa=ATAN2(axes(2,1),axes(1,1))                             
              pa=ATAN2(axes(2,1),-axes(1,1)) 
+             IF(pa.LT.0.D0) pa=pa+dpig 
              anguni='d' 
              IF(MAX(err1,err2).LT.1.d0) THEN 
                 err1=err1*60 
@@ -873,6 +953,20 @@ SUBROUTINE ephemc(unit,el0,unc0,defcov,t1,t2,dt,idsta,scale,fields,unitmax,mjdca
              END IF
              WRITE(outrec(lr+1:),208) err2,anguni,err1,anguni,pa*degrad 
              lr=lr+26 
+          END IF
+! Sky plane error only deg
+       ELSEIF(field(i).EQ.'skyerr2') THEN
+          IF(outerr) THEN
+             err1=sig(1)*degrad
+             err2=sig(2)*degrad
+             ! correction A. Milani 19/3/2000: remember right ascension increases
+             ! from right to left
+             !             pa=ATAN2(axes(2,1),axes(1,1))
+             pa=ATAN2(axes(2,1),-axes(1,1))
+             IF(pa.LT.0.D0) pa=pa+dpig 
+             anguni=' '
+             WRITE(outrec(lr+1:),218) err2,anguni,err1,anguni,pa*degrad
+             lr=lr+30
           END IF
 ! Galactic latitude                                                     
        ELSEIF(field(i).EQ.'glat') THEN 
@@ -913,7 +1007,7 @@ SUBROUTINE ephemc(unit,el0,unc0,defcov,t1,t2,dt,idsta,scale,fields,unitmax,mjdca
 6   END DO
 201 FORMAT(I3,1X,A3,I5,F7.3) 
 202 FORMAT(F13.6) 
-203 FORMAT(2X,2I3,F7.3,2X,A1,I2,I3,F6.2) 
+203 FORMAT(2X,2I3.2,1X,I2.2,A4,2X,A1,I2.2,I3.2,1X,I2.2,A3) 
 204 FORMAT(F11.7) 
 205 FORMAT(F6.1) 
 207 FORMAT(2F8.4) 
@@ -926,6 +1020,9 @@ SUBROUTINE ephemc(unit,el0,unc0,defcov,t1,t2,dt,idsta,scale,fields,unitmax,mjdca
 214 FORMAT(4X,L1,4X)
 215 FORMAT(F8.3) 
 216 FORMAT(F12.3) 
+217 FORMAT(2X,F13.5,2X,F12.5)
+218 FORMAT(2(F11.5,A1),F6.1) 
+219 FORMAT(I3,1X,A3,I5,1X,I2,A1,A2) 
 340 FORMAT(' ERROR: illegal output field "',A,'"') 
     IF(lr.GT.lrx) STOP '**** ephemc: lr > lrx ****' 
     recv(ip)=outrec(1:lr) 

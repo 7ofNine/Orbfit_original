@@ -92,7 +92,7 @@ CONTAINS
 !         el1 orbital elements for the asteroid at time t1            
 !         unc1 uncertainty of el1, including  covariance and normal matrix
 ! ============INTERFACE=================================================
-SUBROUTINE pro_ele(el0,t1,el1,unc0,unc1,obscod0,twobo) 
+SUBROUTINE pro_ele(el0,t1,el1,unc0,unc1,obscod0,twobo,dede0) 
   USE orbit_elements
   USE close_app, ONLY: kill_propag
 ! equinoctal elements and epoch times
@@ -103,7 +103,9 @@ SUBROUTINE pro_ele(el0,t1,el1,unc0,unc1,obscod0,twobo)
   LOGICAl, INTENT(IN), OPTIONAL :: twobo
 ! normal, covarianvce matrices    
   TYPE(orb_uncert), INTENT(IN), OPTIONAL ::  unc0                       
-  TYPE(orb_uncert), INTENT(INOUT), OPTIONAL ::  unc1 
+  TYPE(orb_uncert), INTENT(INOUT), OPTIONAL ::  unc1
+! state transition matrix
+  DOUBLE PRECISION, INTENT(OUT),OPTIONAL :: dede0(6,6)
 ! ============END INTERFACE=============================================
 ! interface with propag
   double precision xastr(6),xear(6),dxdpar(6,ndimx)
@@ -113,7 +115,7 @@ SUBROUTINE pro_ele(el0,t1,el1,unc0,unc1,obscod0,twobo)
   INTEGER fail_flag, obscode
 ! derivatives of cartesian w.r. elelments, new elements w.r. to cartesian,
 !  new elements w.r. old
-  double precision de1dx(6,6), de1de0(ndimx,ndimx)
+  double precision de1dx(6,6),de1de0(ndimx,ndimx)
   LOGICAL error, twobo1
   INTEGER j, nd ! for variable dimension covariance
 ! static memory not required                                          
@@ -137,6 +139,7 @@ SUBROUTINE pro_ele(el0,t1,el1,unc0,unc1,obscod0,twobo)
   ELSE
      twobo1=.false.
   ENDIF
+  IF(PRESENT(dede0)) ider=1
 ! ===================================================================== 
 ! call private propagation routine, requiring derivatives               
   IF(PRESENT(unc0))THEN
@@ -151,6 +154,14 @@ SUBROUTINE pro_ele(el0,t1,el1,unc0,unc1,obscod0,twobo)
   el2%t=t1
   el2%coord=xastr
   el2%coo='CAR'
+  IF(PRESENT(dede0))THEN
+     CALL coo_cha(el2,el0%coo,el1,fail_flag,de1dx,OBSCODE=obscode)
+     IF(fail_flag.ne.0)THEN
+        WRITE(*,*)'pro_ele: coord ', el0%coo, ' fail_flag=',fail_flag
+     ENDIF
+! chain rule to obtain d(east1)/d(east0)                                
+     dede0=MATMUL(de1dx,dxdpar(1:6,1:6)) 
+  END IF
   IF(PRESENT(unc0))THEN
      CALL coo_cha(el2,el0%coo,el1,fail_flag,de1dx,OBSCODE=obscode)
      IF(fail_flag.ne.0)THEN
@@ -1173,14 +1184,13 @@ SUBROUTINE propin(nfl,y1,t1,t2,y2,h,nvar,nd,dxp0dep0)
                     stmout(1:6,j)=MATMUL(stm(1:6,1:6),stm0(1:6,j))+stm(1:6,j)
                  ENDDO
               ENDIF
-! if the end is at the required time, but a close approach to Earth is still
-! going on, the output mtp/tp trace must be available anyway: str_clan shall decide
-              IF(min_dist) CALL str_clan(stm0,nd,dxp0dep0)
-!
 ! the partials with respect to the dyn.parameters
 ! are already renormalized; they are left as they are
               CALL varunw(stmout,y1,y1(nvar2+1),nd,nvar2) 
            ENDIF
+           ! If the propagation ends but a close approach is still
+           ! going on, the output mtp/tp trace must be available anyway
+           IF(min_dist .AND. idc.NE.0) CALL str_clan(stm0,nd,dxp0dep0)
         ENDIF
         y2(1:nvar)=y1(1:nvar) 
         t1=t2 
@@ -1193,7 +1203,7 @@ SUBROUTINE propin(nfl,y1,t1,t2,y2,h,nvar,nd,dxp0dep0)
         IF(PRESENT(dxp0dep0))THEN
            IF(nvar.gt.6)THEN 
 ! setup the close approach record with derivatives  
-              IF(min_dist) CALL str_clan(stm0,nd,dxp0dep0) 
+              IF(min_dist) CALL str_clan(stm0,nd,dxp0dep0)
 ! Store information for IC center
               IF(surf_stop.AND.kill_propag) CALL str_surfan(stm0,nd,dxp0dep0) 
 ! multiply the accumulated state transition matrix          

@@ -25,6 +25,7 @@ gaussn2.o: \
 io_det.o: \
 	../include/comiod.h90 \
 	../include/pariod.h90 \
+	../suit/ades.mod \
 	../suit/astrometric_observations.mod \
 	../suit/fund_const.mod 
 

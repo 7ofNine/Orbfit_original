@@ -137,8 +137,8 @@ SUBROUTINE predic_obs(el,idsta,tobs,type,       &
      &    alpha,delta,hmagn,inl,                                    &
      &    uncert,sigma,npo,ibv,gamad,sig,axes,npo1,               &  
      &    adot0,ddot0,pha0,dis0,dsun0,elo0,gallat0,ecllat0,twobo, &
-     &    elev0,elsun0,elmoon0,gallon0,sub_ast_station_light0, umbra0, &
-     &    penumbra0)
+     &    elev0,azimuth0,elsun0,elmoon0,gallon0,sub_ast_station_light0, umbra0, &
+     &    penumbra0,phamoon0)
   USE station_coordinates 
   USE orbit_elements                 
   USE semi_linear
@@ -161,9 +161,9 @@ SUBROUTINE predic_obs(el,idsta,tobs,type,       &
 ! ======optional output =================================================
   DOUBLE PRECISION,INTENT(OUT),OPTIONAL :: adot0,ddot0 ! proper motion
   DOUBLE PRECISION,INTENT(OUT),OPTIONAL :: gamad(2,2),axes(2,2),sig(2) ! covariance on sky plane
-  DOUBLE PRECISION,INTENT(OUT),OPTIONAL :: pha0,dis0,dsun0,elo0,gallat0,gallon0,ecllat0,elmoon0 ! phase, distance to Earth, distance to Sun 
-                                             ! elongation, galactic latitude
-  DOUBLE PRECISION,INTENT(OUT),OPTIONAl :: elev0,elsun0 ! elevation of obj, of Sun
+  DOUBLE PRECISION,INTENT(OUT),OPTIONAL :: pha0,dis0,dsun0,elo0,gallat0,gallon0,ecllat0,elmoon0,phamoon0 ! phase, distance to Earth, distance to Sun 
+                                             ! elongation, galactic latitude, Moon phase
+  DOUBLE PRECISION,INTENT(OUT),OPTIONAl :: elev0,azimuth0,elsun0 ! elevation and azimuth of obj, elevation of Sun
 ! points on the confidence boundary (difference w.r. to alpha,delta)    
 ! WARNING! the output number of points is npo1.le.npo; this beacuse hyperbolic points are discarded 
   INTEGER,INTENT(OUT),OPTIONAL :: npo1 
@@ -186,7 +186,7 @@ SUBROUTINE predic_obs(el,idsta,tobs,type,       &
   DOUBLE PRECISION appmag
 ! for astronomical unit in km from fund_const
 ! elongation,distance to Earth, distance to Sun (to compute magnitude)  
-  DOUBLE PRECISION adot,ddot,pha,dis,rdot,dsun,elo,gallat,gallon, ecllat, elev, elsun, elmoon
+  DOUBLE PRECISION adot,ddot,pha,dis,rdot,dsun,elo,gallat,gallon, ecllat, elev,azimuth, elsun, elmoon, phamoon
   LOGICAL sub_ast_station_light, umbra, penumbra
   double precision obs4(4) ! observations: alpha, delta in RAD  alphadot, deltadot in RAD/day
   double precision dobde(4,ndimx) ! partial derivatives of obs, w.r. to asteroid elements and parameters
@@ -233,8 +233,8 @@ SUBROUTINE predic_obs(el,idsta,tobs,type,       &
 ! compute observation; derivatives (of order 1) if required                
   IF(type.eq.'O')THEN 
      CALL alph_del2 (el,tobs,idsta,obs4,ider,nd,dobde,      &
-            &   pha,dis,rdot,dsun,elo,gallat,ecllat,twobo1,elev,&
-            &   elsun,elmoon,gallon,sub_ast_station_light, umbra,penumbra) 
+            &   pha,dis,rdot,dsun,elo,gallat,ecllat,twobo1,elev,azimuth,&
+            &   elsun,elmoon,gallon,sub_ast_station_light, umbra,penumbra,phamoon) 
      IF(fix_mole.and.kill_propag) RETURN
      alpha=obs4(1)
      delta=obs4(2)
@@ -253,11 +253,13 @@ SUBROUTINE predic_obs(el,idsta,tobs,type,       &
      IF(PRESENT(gallon0))gallon0=gallon 
      IF(PRESENT(ecllat0))ecllat0=ecllat
      IF(PRESENT(elev0))elev0=elev
+     IF(PRESENT(azimuth0))azimuth0=azimuth
      IF(PRESENT(elsun0))elsun0=elsun
      IF(PRESENT(elmoon0))elmoon0=elmoon
      IF(PRESENT(sub_ast_station_light0))sub_ast_station_light0=sub_ast_station_light
      IF(PRESENT(umbra0)) umbra0=umbra
      IF(PRESENT(penumbra0)) penumbra0=penumbra
+     IF(PRESENT(phamoon0)) phamoon0=phamoon
 ! compute apparent magnitude at time of observation (only if it is not at default value -9.99)                   
      IF(el%h_mag.eq.-9.99d0)THEN
         hmagn=el%h_mag
@@ -326,7 +328,7 @@ SUBROUTINE predic_obs(el,idsta,tobs,type,       &
   ibv=ibvu ! to output choice done when in auto mode
   if(inlu.eq.2)then                                                  
 ! 2-body aproximation for the central point, no derivatives   
-     CALL alph_del2 (el,tobs,idsta,obs4,ider,nd,dobde,TWOBO=.true.,ELOMOON0=elmoon) 
+     CALL alph_del2 (el,tobs,idsta,obs4,ider,nd,dobde,TWOBO=.true.,ELOMOON0=elmoon,PHAMOON0=phamoon) 
      allin=obs4(1)
      delin=obs4(2)                                   
   endif
@@ -359,7 +361,7 @@ SUBROUTINE predic_obs(el,idsta,tobs,type,       &
         elv%coord=el_m(1:6,n)
 ! 2-body propagation from ellipse, no derivatives      
         CALL alph_del2 (elv,tobs,idsta,obs4,ider,nd,dobde,&
-     &   pha,dis,rdot,dsun,elo,gallat,TWOBO=.true.,ELOMOON0=elmoon) 
+     &   pha,dis,rdot,dsun,elo,gallat,TWOBO=.true.,ELOMOON0=elmoon,PHAMOON0=phamoon) 
 ! compute apparent magnitude at time of observation                     
         hmag_m(n)=appmag(elv%h_mag,elv%g_mag,dsun,dis,pha)
 ! difference is with respect to 2-body approx., used w.r. to true orbit 
@@ -382,7 +384,7 @@ SUBROUTINE predic_obs(el,idsta,tobs,type,       &
 ! full n-body propagation from ellipse, no derivatives   
         if(type.eq.'O')then  
            CALL alph_del2 (elv,tobs,idsta,obs4,ider,nd,dobde, &
-     &   pha,dis,rdot,dsun,elo,gallat,ELOMOON0=elmoon) 
+     &   pha,dis,rdot,dsun,elo,gallat,ELOMOON0=elmoon,PHAMOON0=phamoon) 
            al_m(n)=obs4(1)
            de_m(n)=obs4(2)                     
 ! other prediction data stored in common                                
@@ -523,7 +525,7 @@ SUBROUTINE predic_obs2(el,idsta,tobs,att,nd,uncert,rr,pha,dsun,twobo,dobde,elmoo
 ! optional arguments for magnitude
   IF(PRESENT(pha))pha=pha0
   IF(PRESENT(dsun))dsun=dsun0 
-  IF(PRESENT(elmoon))elmoon=elmoon0 
+  IF(PRESENT(elmoon))elmoon=elmoon0
 ! also computation of r, rdot
   IF(PRESENT(rr))THEN
      rr(1)=dis0
@@ -588,8 +590,8 @@ END SUBROUTINE predic_obs2
 ! ==============INTERFACE============================================   
 SUBROUTINE alph_del2 (el,tobs,iobscod,obs4,ider,nd,  &
      &   dobde,pha0,dis0,rdot0,dsun0,elo0,gallat0,eclat0,&
-     &   twobo,elev0,elsun0,elomoon0,gallon0,sub_ast_station_light0, &
-     &   umbra0,penumbra0) 
+     &   twobo,elev0,azimuth0,elsun0,elomoon0,gallon0,sub_ast_station_light0, &
+     &   umbra0,penumbra0,phamoon0) 
   USE propag_state
   USE orbit_elements                 
   USE close_app, ONLY: fix_mole,kill_propag                
@@ -608,7 +610,7 @@ SUBROUTINE alph_del2 (el,tobs,iobscod,obs4,ider,nd,  &
 ! of obs, w.r. to asteroid elements
 ! ======optional output =================================================
 ! phase, distance to Earth, distance to Sun, solar elongation, galactic and ecliptic latitude
-  DOUBLE PRECISION,INTENT(OUT),OPTIONAl :: pha0,dis0,dsun0,rdot0,elo0,gallat0,gallon0,eclat0, elev0, elsun0,elomoon0
+  DOUBLE PRECISION,INTENT(OUT),OPTIONAL :: pha0,dis0,dsun0,rdot0,elo0,gallat0,gallon0,eclat0,elev0,azimuth0,elsun0,elomoon0,phamoon0
   LOGICAL, INTENT(OUT),OPTIONAL :: sub_ast_station_light0, umbra0,penumbra0
 ! =============END INTERFACE=========================================   
   LOGICAL twobo1 ! control of 2-body approximation
@@ -619,7 +621,7 @@ SUBROUTINE alph_del2 (el,tobs,iobscod,obs4,ider,nd,  &
 ! derivatives of cart. coord. w. r. elements 
   DOUBLE PRECISION dxdpar(6,nd)!,ddxde(3,6,6) 
 ! elongation,distance to Earth, distance to Sun (to compute magnitude)  
-  DOUBLE PRECISION pha,dis,rdot,dsun,elo,gallat,eclat,elev,elsun, elomoon,gallon
+  DOUBLE PRECISION pha,dis,rdot,dsun,elo,gallat,eclat,elev,azimuth,elsun, elomoon,gallon,phamoon
   LOGICAL sub_ast_station_light, umbra,penumbra
 ! **********************************************************************
 !****************                                                       
@@ -636,7 +638,7 @@ SUBROUTINE alph_del2 (el,tobs,iobscod,obs4,ider,nd,  &
   IF(fix_mole.and.kill_propag) RETURN
 ! Computation of observations                                           
   CALL oss_dif2(xast,xea,tobs,iobscod,obs4,ider,dobdx,      &
-     &   pha,dis,rdot,dsun,elo,gallat,eclat,elev,elsun,elomoon,gallon,sub_ast_station_light, umbra,penumbra) 
+     &   pha,dis,rdot,dsun,elo,gallat,eclat,elev,azimuth,elsun,elomoon,gallon,sub_ast_station_light, umbra,penumbra,phamoon) 
  ! store true phase, etc.  
   IF(PRESENT(pha0))pha0=pha 
   IF(PRESENT(dis0))dis0=dis 
@@ -647,8 +649,10 @@ SUBROUTINE alph_del2 (el,tobs,iobscod,obs4,ider,nd,  &
   IF(PRESENT(gallon0))gallon0=gallon 
   IF(PRESENT(eclat0))eclat0=eclat
   IF(PRESENT(elev0))elev0=elev
+  IF(PRESENT(azimuth0))azimuth0=azimuth
   IF(PRESENT(elsun0))elsun0=elsun
   IF(PRESENT(elomoon0))elomoon0=elomoon
+  IF(PRESENT(phamoon0))phamoon0=phamoon
   IF(PRESENT(sub_ast_station_light0))sub_ast_station_light0=sub_ast_station_light
   IF(PRESENT(umbra0)) umbra0=umbra
   IF(PRESENT(penumbra0)) penumbra0=penumbra
@@ -683,7 +687,7 @@ END SUBROUTINE alph_del2
 ! (if required)                                                         
 ! ===================================================================== 
 SUBROUTINE oss_dif2(xast,xea,tobs,iobscod,obs4,ider,dobdx,      &
-     &   pha0,dis0,rdot0,dsun0,elo0,gallat0,eclat0,elev,elsun,elomoon,gallon0,sub_ast_station_light, umbra,penumbra) 
+     &   pha0,dis0,rdot0,dsun0,elo0,gallat0,eclat0,elev,azimuth,elsun,elomoon,gallon0,sub_ast_station_light,umbra,penumbra,phamoon) 
   USE reference_systems, ONLY: observer_position,obs2ecl 
   USE force_model
   USE fund_const
@@ -697,7 +701,8 @@ SUBROUTINE oss_dif2(xast,xea,tobs,iobscod,obs4,ider,dobdx,      &
   DOUBLE PRECISION, INTENT(OUT) :: obs4(4) ! observations alpha, delta, aodt,ddot
   DOUBLE PRECISION, INTENT(OUT) :: dobdx(4,6) ! partials of obs  w.r.t. cartesian ecliptic
 ! phase, distance to Earth, distance to Sun elongation, galactic latitude, elevation, elev. Sun
-  DOUBLE PRECISION,INTENT(OUT) :: pha0,dis0,rdot0,dsun0,elo0,gallat0,gallon0,eclat0, elev,elsun,elomoon
+  DOUBLE PRECISION,INTENT(OUT) :: pha0,dis0,rdot0,dsun0,elo0,gallat0,gallon0,eclat0, elev,elsun,elomoon,azimuth 
+  DOUBLE PRECISION,INTENT(OUT),OPTIONAL :: phamoon
   LOGICAL, INTENT(OUT),OPTIONAL :: sub_ast_station_light, umbra, penumbra
 ! ===================================================================== 
   double precision d(6),dc(3) ! vector difference of cartesian coordinates, ecliptic 
@@ -707,8 +712,8 @@ SUBROUTINE oss_dif2(xast,xea,tobs,iobscod,obs4,ider,dobdx,      &
 
   DOUBLE PRECISION dcor(6) ! after aberration correction
   DOUBLE PRECISION xo(3),vo(3),xobsea(6) ! topocentric position of the observatory, helyocentric 
-  DOUBLE PRECISION xo2(3),vo2(3),xast1(6),xea1(6),d1(6),xo1(3),vo1(3),xobsea1(6)
-  DOUBLE PRECISION cospha,coselo ! phase and elongation cosine
+  DOUBLE PRECISION xo2(3),vo2(3),xast1(6),xea1(6),d1(6),xo1(3),vo1(3),xobsea1(6),d2(6)
+  DOUBLE PRECISION cospha,coselo,cosphamoon ! phase and elongation cosine
   DOUBLE PRECISION xmoon(6),xobmoon(3),coselomoon,sinelomoon(3) ! heliocentric, obs-centric of Moon,cos and sin of Moon elongation
   DOUBLE PRECISION sinelo,vvv(3)
   DOUBLE PRECISION dz,dea,dc_s ! auxiliary var
@@ -718,12 +723,12 @@ SUBROUTINE oss_dif2(xast,xea,tobs,iobscod,obs4,ider,dobdx,      &
 ! partials of equatorial alpha, delta w.r. to cartesian ecliptic coord. 
   DOUBLE PRECISION dadx(3),dddx(3),ddadx(3,3),ddddx(3,3) 
 ! aux. var for computation of second derivatives                        
-  DOUBLE PRECISION x,y,z 
+  DOUBLE PRECISION x,y,z
   DOUBLE PRECISION h_umbra, z_ast, d_cone, h_penumbra, z_ast_penumbra, d_cone_penumbra,par_rad,out_penumbra
   DOUBLE PRECISION den,x2,y2,z2,x4,y4 
   DOUBLE PRECISION x2y2,x2z2,y2z2 
-  DOUBLE PRECISION coscoelev, coscoelsun,singallon0,cosgallon0
-  DOUBLE PRECISION xolon,xolat,xoalt,xovert(3),xovert2(3),xoequ(3)
+  DOUBLE PRECISION coscoelev, coscoelsun,singallon0,cosgallon0,gast
+  DOUBLE PRECISION xolon,xolat,xoalt,xovert(3),xovert2(3),xoequ(3),angH
   CHARACTER(LEN=16)  :: stname 
 ! ===================================================================== 
 ! Difference vector in ecliptic/equatorial 
@@ -737,11 +742,13 @@ SUBROUTINE oss_dif2(xast,xea,tobs,iobscod,obs4,ider,dobdx,      &
         WRITE(*,*)'oss_dif2: rhs=', rhs
         STOP
      ENDIF
-     CALL observer_position(tobs,xo,vo,OBSCODE=iobscod)
+     CALL observer_position(tobs,xo,vo,OBSCODE=iobscod,GAST=gast)
 !     call pvobs(tobs,iobscod,xo,vo) 
 ! topocentric correction in ecliptic(rhs=1)/equatorial(rhs=2) coordinates
      d(1:3)=d(1:3)-xo  
      d(4:6)=d(4:6)-vo
+     d2(1:3)=MATMUL(roteceq,d(1:3))*149597870691.d0
+     d2(4:6)=MATMUL(roteceq,d(4:6))*149597870691.d0
 ! Elevation over horizon 
      CALL obscoo(iobscod,xoequ,stname)
      xoequ=xoequ*149597870691.d0
@@ -768,6 +775,9 @@ SUBROUTINE oss_dif2(xast,xea,tobs,iobscod,obs4,ider,dobdx,      &
   ELSE
      xo=0.d0
      vo=0.d0
+     IF (iobscod.eq.500) THEN
+        elev=0.d0
+     ENDIF
   ENDIF
   xobsea(1:3)=xo+xea(1:3)
   xobsea(4:6)=vo+xea(4:6)
@@ -870,6 +880,24 @@ ENDIF
   CALL mooncar(tobs,xmoon,1)
   xobmoon=xmoon(1:3)-xobsea1(1:3)
   coselomoon=prscal(d1,xobmoon)/(dis0*vsize(xobmoon))
+  cosphamoon=prscal(xmoon,xobmoon)/(vsize(xmoon)*vsize(xobmoon))
+  IF(cosphamoon.gt.1.d0)THEN
+     IF(cosphamoon.lt.1.d0+10.d0*epsilon(1.d0))THEN
+        cosphamoon=1.d0
+     ELSE
+        write(ierrou,*)'oss_dif2: error! cosphamoon=',cosphamoon
+        numerr=numerr+1
+     ENDIF
+  ENDIF
+  IF(cosphamoon.lt.-1.d0)THEN
+     IF(cosphamoon.gt.-1.d0-10.d0*epsilon(1.d0))THEN
+        cosphamoon=-1.d0
+     ELSE
+        write(ierrou,*)'oss_dif2: error! cosphamoon=',cosphamoon
+        numerr=numerr+1
+     ENDIF
+  ENDIF
+  phamoon=acos(cosphamoon)
   CALL prvec(d1,xobmoon,vvv)
   sinelomoon=MATMUL(roteceq,vvv)
   elomoon=acos(coselomoon)
@@ -909,6 +937,18 @@ ENDIF
   ENDIF
 ! Computation of observation: declination (radians)                     
   delta=asin(d(3)/dis0) 
+! Computation of Azimuth
+  IF(istat.gt.0.and.iobscod.ne.500)THEN 
+     angH= gast + xolon - alpha
+     azimuth=atan2((-cos(delta)*sin(angH)),(cos(xolat)*sin(delta)-sin(xolat)*cos(delta)*cos(angH)))
+     IF(azimuth.LT.0) THEN 
+        azimuth = azimuth + dpig
+     ENDIF
+  ELSE
+     azimuth = 0
+  ENDIF
+
+
 ! ===================================================================== 
 ! galactic latitude. Corrected 13/10/2008 by F.Bernardi  
   gallat0=asin(sin(degal)*sin(delta)+cos(degal)*cos(delta)*cos(alpha-algal))
@@ -1807,7 +1847,7 @@ SUBROUTINE outobc(iun,type,ids,t1,alpha,delta,hmagn,adot,ddot,    &
       DOUBLE PRECISION, INTENT(IN), OPTIONAL :: elev,dsun,elsun,pha
 ! covariance                                                            
       integer icov 
-      DOUBLE PRECISION gamad(2,2),axes(2,2),sig(2) 
+      DOUBLE PRECISION gamad(2,2),axes(2,2),sig(2), velsiz, pa, pad, cvf
 ! ================end interface===============================          
       DOUBLE PRECISION princ 
       integer i,j 
@@ -1817,7 +1857,8 @@ SUBROUTINE outobc(iun,type,ids,t1,alpha,delta,hmagn,adot,ddot,    &
       CHARACTER*22 timstr 
       CHARACTER*19 tmpstr 
       CHARACTER*12 rastri,rdstri 
-      CHARACTER*1 signo 
+      CHARACTER*1 signo
+      LOGICAL fail
 ! convert time                                                          
       CALL mjddat(t1,iday,imonth,iyear,hour) 
 ! convert hour to 12:12:12                                              
@@ -1855,45 +1896,62 @@ SUBROUTINE outobc(iun,type,ids,t1,alpha,delta,hmagn,adot,ddot,    &
             airmass=1.002432d0*cosangzen**2+0.148386d0*cosangzen+0.0096467d0
             airmass=airmass/(cosangzen**3+0.149864d0*cosangzen**2+0.0102963d0*cosangzen+0.000303978)
          ENDIF
+         CALL angvcf('"/min',cvf,fail) 
+         velsiz=SQRT((secrad*adot*cos(delta)/1440.d0)**2+(secrad*ddot/1440.d0)**2)
+         pa=ATAN2(adot*cos(delta),ddot) 
+         IF(pa.LT.0.D0) pa=pa+dpig
+         pa=pa*degrad 
          IF(PRESENT(elmoon).and.PRESENT(gallat).and.PRESENT(gallon).and.PRESENT(elev).and.PRESENT(dsun).and.PRESENT(elsun))THEN 
             IF(elev.le.0) THEN
                write(iun,101)timstr,t1,ids,                                &
                     &        rastri,alpha*degrad,                                      &
                     &        rdstri,delta*degrad,                                      &
-                    &        secrad*adot*cos(delta)/1440.d0,secrad*ddot/1440.d0,dsun,  &
+                    &        secrad*adot*cos(delta)/1440.d0,secrad*ddot/1440.d0,  &
+                    &        secrad*adot*cos(delta)*50.d0/(3.d0*1440.d0),secrad*ddot*50.d0/(3.d0*1440.d0),  &
+                    &        velsiz,pa,dsun,                                                &
                     &        dis,elsun*degrad,elo*degrad,elmoon*degrad,gallat*degrad,         &
                     &        gallon*degrad,hmagn,pha*degrad,elev*degrad
                write(*,101)timstr,t1,ids,                                  &
                     &        rastri,alpha*degrad,                                      &
                     &        rdstri,delta*degrad,                                      &
-                    &        secrad*adot*cos(delta)/1440.d0,secrad*ddot/1440.d0,dsun,  &
+                    &        secrad*adot*cos(delta)/1440.d0,secrad*ddot/1440.d0,  &
+                    &        secrad*adot*cos(delta)*50.d0/(3.d0*1440.d0),secrad*ddot*50.d0/(3.d0*1440.d0),  &
+                    &        velsiz,pa,dsun,                                                &
                     &        dis,elsun*degrad,elo*degrad,elmoon*degrad,gallat*degrad,         &
                     &        gallon*degrad,hmagn,pha*degrad,elev*degrad
             ELSE IF(ids.eq.500.or.ids.eq.245.or.ids.eq.247.or.ids.eq.248.or.ids.eq.249.or.ids.eq.250) THEN
                write(iun,104)timstr,t1,ids,                                &
                     &        rastri,alpha*degrad,                                      &
                     &        rdstri,delta*degrad,                                      &
-                    &        secrad*adot*cos(delta)/1440.d0,secrad*ddot/1440.d0,dsun,  &
+                    &        secrad*adot*cos(delta)/1440.d0,secrad*ddot/1440.d0,  &
+                    &        secrad*adot*cos(delta)*50.d0/(3.d0*1440.d0),secrad*ddot*50.d0/(3.d0*1440.d0),  &
+                    &        velsiz,pa,dsun,                                                &
                     &        dis,elo*degrad,elmoon*degrad,gallat*degrad,gallon*degrad, &
                     &        hmagn,pha*degrad
                write(*,104)timstr,t1,ids,                                  &
                     &        rastri,alpha*degrad,                                      &
                     &        rdstri,delta*degrad,                                      &
-                    &        secrad*adot*cos(delta)/1440.d0,secrad*ddot/1440.d0,dsun,  &
+                    &        secrad*adot*cos(delta)/1440.d0,secrad*ddot/1440.d0,  &
+                    &        secrad*adot*cos(delta)*50.d0/(3.d0*1440.d0),secrad*ddot*50.d0/(3.d0*1440.d0),  &
+                    &        velsiz,pa,dsun,                                                &
                     &        dis,elo*degrad,elmoon*degrad,gallat*degrad,gallon*degrad, &
                     &        hmagn
             ELSE
                write(iun,105)timstr,t1,ids,                                &
                     &        rastri,alpha*degrad,                                      &
                     &        rdstri,delta*degrad,                                      &
-                    &        secrad*adot*cos(delta)/1440.d0,secrad*ddot/1440.d0,dsun,  &
+                    &        secrad*adot*cos(delta)/1440.d0,secrad*ddot/1440.d0,  &
+                    &        secrad*adot*cos(delta)*50.d0/(3.d0*1440.d0),secrad*ddot*50.d0/(3.d0*1440.d0),  &
+                    &        velsiz,pa,dsun,                                                &
                     &        dis,elsun*degrad,elo*degrad,elmoon*degrad,gallat*degrad,         &
                     !     &        dis,elo*degrad,elmoon*degrad,gallat*degrad,         &
                     &        gallon*degrad,hmagn,pha*degrad,elev*degrad,airmass
                write(*,105)timstr,t1,ids,                                  &
                     &        rastri,alpha*degrad,                                      &
                     &        rdstri,delta*degrad,                                      &
-                    &        secrad*adot*cos(delta)/1440.d0,secrad*ddot/1440.d0,dsun,  &
+                    &        secrad*adot*cos(delta)/1440.d0,secrad*ddot/1440.d0,  &
+                    &        secrad*adot*cos(delta)*50.d0/(3.d0*1440.d0),secrad*ddot*50.d0/(3.d0*1440.d0),  &
+                    &        velsiz,pa,dsun,                                                &
                     &        dis,elsun*degrad,elo*degrad,elmoon*degrad,gallat*degrad,         &
                     !     &        dis,elo*degrad,elmoon*degrad,gallat*degrad,         &
                     &        gallon*degrad,hmagn,pha*degrad,elev*degrad,airmass
@@ -1902,7 +1960,8 @@ SUBROUTINE outobc(iun,type,ids,t1,alpha,delta,hmagn,adot,ddot,    &
                     &        'Observatory code = ',i4.4/                               &
                     &        'RA = ',a12,' (HH:MM:SS); ',f11.5,' (deg)'/               &
                     &        'DEC = ',a12,' (deg min sec); ',f11.5,' (deg)'/           &
-                    &        'RA*cos(DEC)/DEC Apparent motion =',2(2x,f9.3),' (arcsec/min)'/    &
+                    &        'RA*cos(DEC)/DEC Apparent motion =',2(2x,f9.3),' (arcsec/min)',2(2x,f10.1),' (marcsec/s)'/    &
+                    &        'Apparent motion velocity = ',f9.3,' arcsec/min)', ' and Position Angle = ',f7.3, ' (deg)'/ &
                     &        'Sun distance = ',f8.4,' (au)'/                           &
                     &        'Earth distance = ',f8.4,' (au)'/                         &
                     &        'Sun elevation above horizon = ',f7.2,' (deg)'/           &
@@ -1916,7 +1975,8 @@ SUBROUTINE outobc(iun,type,ids,t1,alpha,delta,hmagn,adot,ddot,    &
                     &        'Observatory code = ',i4.4/                               &
                     &        'RA = ',a12,' (HH:MM:SS); ',f11.5,' (deg)'/               &
                     &        'DEC = ',a12,' (deg min sec); ',f11.5,' (deg)'/           &
-                    &        'RA*cos(DEC)/DEC Apparent motion =',2(2x,f9.3),' (arcsec/min)'/    &
+                    &        'RA*cos(DEC)/DEC Apparent motion =',2(2x,f9.3),' (arcsec/min)',2(2x,f10.1),' (marcsec/s)'/    &
+                    &        'Apparent motion velocity = ',f9.3,' arcsec/min)', ' and Position Angle = ',f7.3, ' (deg)'/ &
                     &        'Sun distance = ',f8.4,' (au)'/                           &
                     &        'Earth distance = ',f8.4,' (au)'/                         &
                     &        'Solar elongation = ',f7.2,' (deg)','    Lunar elongation = ',f7.2,' (deg)'/                       &
@@ -1929,7 +1989,8 @@ SUBROUTINE outobc(iun,type,ids,t1,alpha,delta,hmagn,adot,ddot,    &
                     &        'Observatory code = ',i4.4/                               &
                     &        'RA = ',a12,' (HH:MM:SS); ',f11.5,' (deg)'/               &
                     &        'DEC = ',a12,' (deg min sec); ',f11.5,' (deg)'/           &
-                    &        'RA*cos(DEC)/DEC Apparent motion =',2(2x,f9.3),' (arcsec/min)'/    &
+                    &        'RA*cos(DEC)/DEC Apparent motion =',2(2x,f9.3),' (arcsec/min)',2(2x,f10.1),' (marcsec/s)'/    &
+                    &        'Apparent motion velocity = ',f9.3,' arcsec/min)', ' and Position Angle = ',f7.3, ' (deg)'/ &
                     &        'Sun distance = ',f8.4,' (au)'/                           &
                     &        'Earth distance = ',f8.4,' (au)'/                         &
                     &        'Sun elevation above horizon = ',f7.2,' (deg)'/           &
@@ -1943,19 +2004,24 @@ SUBROUTINE outobc(iun,type,ids,t1,alpha,delta,hmagn,adot,ddot,    &
             write(iun,103)timstr,t1,ids,                                &
                  &        rastri,alpha*degrad,                                      &
                  &        rdstri,delta*degrad,                                      &
-                 &        secrad*adot*cos(delta)/1440.d0,secrad*ddot/1440.d0,dsun,  &
+                 &        secrad*adot*cos(delta)/1440.d0,secrad*ddot/1440.d0,  &
+                 &        secrad*adot*cos(delta)*50.d0/(3.d0*1440.d0),secrad*ddot*50.d0/(3.d0*1440.d0),  &
+                 &        velsiz,pa,dsun,                                                &
                  &        dis,elo*degrad,elmoon*degrad,hmagn,pha*degrad
             write(*,103)timstr,t1,ids,                                  &
                  &        rastri,alpha*degrad,                                      &
                  &        rdstri,delta*degrad,                                      &
-                 &        secrad*adot*cos(delta)/1440.d0,secrad*ddot/1440.d0,dsun,  &
+                 &        secrad*adot*cos(delta)/1440.d0,secrad*ddot/1440.d0,  &
+                 &        secrad*adot*cos(delta)*50.d0/(3.d0*1440.d0),secrad*ddot*50.d0/(3.d0*1440.d0),  &
+                 &        velsiz,pa,dsun,                                                &
                  &        dis,elo*degrad,elmoon*degrad,hmagn,pha*degrad
 103         format('Astrometric Observation Prediction'/                   &
                  &        'For ',a19,' (UTC); ',f12.5,'(MJD)'/                      &
                  &        'Observatory code = ',i4.4/                               &
                  &        'RA = ',a12,' (HH:MM:SS); ',f11.5,' (deg)'/               &
                  &        'DEC = ',a12,' (deg min sec); ',f11.5,' (deg)'/           &
-                 &        'RA*cos(DEC)/DEC Apparent motion =',2(2x,f9.3),' (arcsec/min)'/    &
+                 &        'RA*cos(DEC)/DEC Apparent motion =',2(2x,f9.3),' (arcsec/min)',2(2x,f10.1),' (marcsec/s)'/    &
+                 &        'Apparent motion velocity = ',f9.3,' arcsec/min)', ' and Position Angle = ',f7.3, ' (deg)'/ &
                  &        'Sun distance = ',f8.4,' (au)'/                           &
                  &        'Earth distance = ',f8.4,' (au)'/                         &
                  &        'Solar elongation = ',f7.2,' (deg)'/                      &
@@ -1967,11 +2033,13 @@ SUBROUTINE outobc(iun,type,ids,t1,alpha,delta,hmagn,adot,ddot,    &
                  &        rastri,alpha*degrad,                                      &
                  &        rdstri,delta*degrad,                                      &
                  &        secrad*adot/24.d0,secrad*ddot/24.d0,                      &
+                 &        velsiz,pa,dsun,                                                &
                  &        dis,elo*degrad,hmagn,pha*degrad
             write(*,221)timstr,t1,ids,                                  &
                  &        rastri,alpha*degrad,                                      &
                  &        rdstri,delta*degrad,                                      &
                  &        secrad*adot/24.d0,secrad*ddot/24.d0,                      &
+                 &        velsiz,pa,dsun,                                                &
                  &        dis,elo*degrad,hmagn,pha*degrad
 221         format('Astrometric Observation Prediction'/                   &
                  &        'For ',a19,' (UTC); ',f12.5,'(MJD)'/                      &
@@ -1979,6 +2047,7 @@ SUBROUTINE outobc(iun,type,ids,t1,alpha,delta,hmagn,adot,ddot,    &
                  &        'RA = ',a12,' (HH:MM:SS); ',f11.5,' (deg)'/               &
                  &        'DEC = ',a12,' (deg min sec); ',f11.5,' (deg)'/           &
                  &        'RA/DEC Apparent motion =',2(2x,f9.2),' (arcsec/hour)'/   &
+                 &        'Apparent motion velocity = ',f9.3,' arcsec/min)', ' and Position Angle = ',f7.3, ' (deg)'/ &
                  &        'Sun distance = ',f8.4,' (au)'/                           &
                  &        'Earth distance = ',f8.4,' (au)'/                         &
                  &        'Solar elongation = ',f7.2,' (deg)'/                      &

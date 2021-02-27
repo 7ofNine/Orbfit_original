@@ -122,7 +122,10 @@ CONTAINS
           jc=0 
 ! first call to falsi                                                   
           first=.true. 
-          IF(min_dist) CALL falsi(tcur,xa,va,nv,xpla,jc,first,iplam)
+          IF(min_dist)THEN
+             CALL falsi(tcur,xa,va,nv,xpla,jc,first,iplam)
+             njc=jc
+          END IF
           IF(surf_stop.AND.iplam.EQ.3) CALL falsi_surf(tcur,xa,va,nv,xpla,first,iplam)
 ! setup of fixed stepsize                                               
           nesold=nes 
@@ -146,7 +149,10 @@ CONTAINS
           x(1:3)=xa(1:3)-xpla(1:3) 
           v(1:3)=va(1:3)-xpla(4:6) 
           first=.false. 
-          IF(min_dist)CALL falsi(tcur,xa,va,nv,xpla,jc,first,iplam)
+          IF(min_dist)THEN
+             CALL falsi(tcur,xa,va,nv,xpla,jc,first,iplam)
+             njc=jc
+          END IF
           IF(surf_stop.AND.iplam.EQ.3) CALL falsi_surf(tcur,xa,va,nv,xpla,first,iplam)
 ! mole fix case: check kill_propag
           IF(kill_propag)THEN

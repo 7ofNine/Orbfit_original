@@ -16,7 +16,7 @@ LONG=  iolon9.o long9.o secthe8.o terms9.o inte8.o selre9.o  subs9.o \
 
 INPUT= reapla.o coostd.o reaout.o vareqi.o reacat9.o
 
-LIBDEPS=  ../lib/libprop.a ../lib/libmoid.a ../lib/libgauss.a ../lib/libsuit.a
+LIBDEPS=  ../lib/libprop.a ../lib/libmoid.a ../lib/libgauss.a ../lib/libsuit.a 
 
 # Executables
 orbit9.x:  orbit9.o outsubv.o fir_filters.o input9.o $(INPUT) reaopt.o \

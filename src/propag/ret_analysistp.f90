@@ -217,6 +217,10 @@ CONTAINS
     DOUBLE PRECISION  :: day                               ! Day of the date
     CHARACTER(LEN=2)  :: monthch,daych,hourch,minutech     ! Names for the date
     CHARACTER(LEN=17) :: impactdate                        ! Impact date
+    DOUBLE PRECISION  :: diff_ts,cur_time
+    INTEGER           :: curr_hour
+    INTEGER           :: date_values(8)
+    DOUBLE PRECISION, EXTERNAL :: tjm1
     !=======================================================================================================
     !********************************************************!
     !  Compute IP by finite approximation to 1-dim integral  !
@@ -357,7 +361,18 @@ CONTAINS
           CALL rmsp(riskesafile,lee) 
           iunesarisk=49 
           OPEN(UNIT=iunesarisk, FILE=riskesafile(1:lee),POSITION='APPEND')
-          ts=torino(p_imp,(e_tilde/p_imp))
+          !------------!
+          ! Compute TS !
+          !------------!
+          CALL DATE_AND_TIME(VALUES=date_values)
+          curr_hour = date_values(5)+(date_values(6)+date_values(7)/60.d0)/60.d0
+          cur_time  = tjm1(date_values(3),date_values(2),date_values(1),curr_hour)
+          diff_ts = ABS(tcl-cur_time)/365.25d0
+          IF(diff_ts.LT.100.d0)THEN
+             ts=torino(p_imp,(e_tilde/p_imp))
+          ELSE
+             ts=-1
+          END IF
           WRITE(iunesarisk,50) impactdate,p_imp,ps,ts, v_imp
 50        FORMAT(A17,2X,1P,E9.2,4X,0P,F6.2,5X,I2,6X,F7.2)
        END IF
@@ -1066,7 +1081,8 @@ CONTAINS
   !===================================================================================
   SUBROUTINE achillestp(va_trace,siglim,type,                  &
        &     iunwar0,iunnew0,va_tracemin,niter,fals_conv,fals_notp,deltasig,limit_stretch) 
-    USE output_control            
+    USE output_control  
+    USE planet_masses,   ONLY: gmearth
     !========================== INPUT================================
     TYPE(tp_point), INTENT(IN) :: va_trace
     DOUBLE PRECISION, INTENT(IN) :: siglim 
@@ -1093,6 +1109,7 @@ CONTAINS
     ! (with uniform prob.density)     
     DOUBLE PRECISION, PARAMETER :: del_fal=2.3d-3    ! this is the limit change 
     ! in distance in RE (=1e-7 AU)
+    DOUBLE PRECISION  :: b_e,v,mu
     !=================================================================
     WRITE(*,*)' achillestp entry ', type,va_trace%tcla,va_trace%rindex 
     iunwar=abs(iunwar0)
@@ -1163,8 +1180,12 @@ CONTAINS
                &           ar(nn+1)%stretch,ar(nn+1)%width,ar(nn+1)%moid,       &
                &           cont_dist,cont_prob,niter,type,method,iunwar0)            
           ddw=d(nn+1) 
-          IF(cont_dist.lt.del_fal.or.cont_dist.lt.del_fal*ddw         &
-               &           .or.cont_prob.lt.eps_fal.or.ddw.lt.1.d0)THEN           
+          ! Convergence control
+          v   = ar(nn+1)%opik%coord(1) 
+          mu  = gmearth/reau**3
+          b_e = sqrt(1.d0+(2.d0*mu)/v**2)
+          IF(cont_dist.LT.del_fal .OR. cont_dist.LT.del_fal*ddw            &
+               &           .OR. cont_prob.LT.eps_fal .OR. ddw.LT.b_e)THEN           
              ! convergence achieved                                                  
              WRITE(iunwar,*)' minimum found, iter= ',it,nn 
              WRITE(*,*)' minimum found, iter= ',it,nn 

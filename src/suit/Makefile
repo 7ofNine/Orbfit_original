@@ -5,7 +5,7 @@ all: ../lib/libsuit.a
 # LIBRARY OBJECT FILES
 
 # Observations & Statistics
-OBS_OBJ=station_coordinates.o astrometric_observations.o \
+OBS_OBJ=station_coordinates.o ades.o astrometric_observations.o \
      obsvarie.o iorwo_old.o attributable.o very_short_arc.o obs_simul.o\
       cat_debias.o healpix_types.o 
 
@@ -25,7 +25,7 @@ MATH_OBJ=math_lib.o pol_zeros.o angle_var.o eigen_val.o
 EPH_OBJ=jpl_ephem.o read_ephem.o fund_const.o planet_masses.o
 
 # File operations; I/O control
-FILE_OBJ=file_oper.o fidinam4.o output_control.o name_rules.o
+FILE_OBJ=file_oper.o name_rules.o fidinam4.o output_control.o 
 
 # Header and  Main option namelists; also old version 
 HNAM_OBJ=header_input.o option_input.o genio7.o

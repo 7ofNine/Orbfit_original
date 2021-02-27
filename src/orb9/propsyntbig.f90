@@ -101,7 +101,7 @@ PROGRAM propsynt
         WRITE(*,179)tf(1),tf(ntf),ntf 
         WRITE(9,179)tf(1),tf(ntf),ntf 
 179     FORMAT(' data from t=',f14.4,' to t=',f14.4,' no datapoints=',i5) 
-        WRITE(9,*)' together ',ndap,'  step',nshi 
+        WRITE(9,'(a10,1x,i10,1x,a6,1x,i10)')' together ',ndap,'  step',nshi 
         WRITE(*,*)' together ',ndap,'  step',nshi 
      ENDIF
 ! =====================================================                 

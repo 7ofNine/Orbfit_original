@@ -25,7 +25,7 @@ PROGRAM conv9
 !  character arrays                                                     
   CHARACTER*3 coox,cooy,sysx,sysy,unitx,uniy 
   CHARACTER*6 refx,refy 
-  CHARACTER*4 number(nastx) 
+  CHARACTER*9 number(nastx) 
   CHARACTER*60 formx,formy,formx1,formy1 
 ! scalar variables
   INTEGER ilce, nast, imas, nbod, ifo, nia, iall, nangy, nacty, inter
